@@ -1,0 +1,101 @@
+<doc>
+	<lectureno>1</lectureno>
+	<course>dummy</course>
+	<date>dummy</date>
+	<headline>dummy</headline>
+	<url>
+		https://ocw.mit.edu/courses/6-s897-machine-learning-for-healthcare-spring-2019/2020812c6b3be9e2c27873595d1a9aed_MIT6_S897S19_lec1.pdf</url>
+	<slides>
+		<slide>
+			<slideno>0</slideno>
+			<text>machin learn healthcar hst 956 6 s897 lectur 1 make healthcar uniqu prof david sontag pete szolovit 1</text>
+			</slide>
+		<slide>
+			<slideno>1</slideno>
+			<text>problem cost health ca expenditur 3 trillion rise som clinician world chronic condit diagnos lat inappropri mana ged medic error pervas 2</text>
+			</slide>
+		<slide>
+			<slideno>2</slideno>
+			<text>outlin today class 1 histori ml healthcar 2 3 exa mples ml transform healthcar 4 uniqu abo ut ml healthcar 5 overview cla ss syllabus 3</text>
+			</slide>
+		<slide>
+			<slideno>3</slideno>
+			<text>useridescript case advic explan user inter faceexpert system qp infer engin qp knowledg base figur 1 1 major part expert system arrow inform flow readi 26 year male patient understand age patient 26 sex patient male day ago respiratori tract symptom jo understand patient jo respiratori tract symptom patient coupl day admiss malais give date admiss march 12 1979mi understand patient admit hospit 3 day ago malais symptom patient 5 day ago figur 33 1 short sampl dialogu physician input capit letter doubl asterisk 1970 mycin expert system 1970 stanford cin expert dialogu interfac system identifi bacteria caus sever infect propos od therapi 69 case infecti diseas expert 4 addison wesley publish compani content exclud creativ common licens inform https ocw mit faq fair</text>
+			</slide>
+		<slide>
+			<slideno>4</slideno>
+			<text>2 uq93 wx xw 2 ap 7 2 uq9 yg 9a01k5z3 wx xw 2 a0 8 6 1 6k 9 9 1 1 6 7 0 07 6 6a 9 9 69 9 o7e 79 c6 k0 0k5 5 9 5 k5 e6 b2b 1 90 5 0 61o 9 69 h61 6a 9 61o 9o7e 7 h61 6a 9 1 fk 9 c1 7 193 9 9 5 0 54 9 7 9 0e f9h cc 0 1 9a 2 6 9 1 9o7e 79 cc 0 76 6 cc 0 16 5 cp 1 6 5m 6 2e</text>
+			</slide><slide><slideno>5</slideno>
+			<text>1980 autom medic discoveri discov prednison elev cholesterol annal intern medicin 86 robert blum discoveri confirm incorpor causal relationship larg time orient clinic data base rx project dept comput scienc stanford 1981 diagram robert blum right reserv content exclud creativ common licens inform https ocw mit faq fair 6</text>
+			</slide><slide><slideno>6</slideno>
+			<text>figur 2 multilay perceptron layer percep tron input hidden unit output unit 1990 neural network medicin neural network cl inic data 1990 88 studi year small number eatur input data collect ch art review problem 1 fit clinic workflow 2 hard en ough train data 3 poor general ew place penni frost neural network clinic medicin med deci make 1996 7 societi medic decis make right reserv content exclud creativ common licens inform https ocw mit faq fair</text>
+			</slide><slide><slideno>7</slideno>
+			<text>outlin today class 1 histori ml healthcar 2 3 exa mples ml transform healthcar 4 uniqu abo ut ml healthcar 5 overview cla ss syllabus 8</text>
+			</slide><slide><slideno>8</slideno>
+			<text>71 9 85 2 9496 9 96 certi ehr basic ehr00000th opportun adopt electron health record ehr increas 9x 2008 9 4 12 2 15 6 27 6 44 4 59 4 75 5 83 8 percentag hospit 2008 2009 2010 2011 2012 2013 2014 2015 courtesi health human servic imag public domain henri al onc data 2016 9</text>
+			</slide><slide><slideno>9</slideno>
+			<text>10 61k f6 69 9 6a 16 1o 1 7e0 6 6 5o9 ko 5 6 5 f6 6 c1 7 tum 1 6 61 e6 9 7 k16e5 9 6 9k 9 6a 16 1o 9 9 7 6 9 9 lab comput physiolog right reserv content exclud creativ common licens inform https ocw mit faq fair</text>
+			</slide><slide><slideno>10</slideno>
+			<text>larg dataset presid obama initi creat 1 million person research cohort core data set baselin health clinic data de rive electron health record ehr healthcar cla im laboratori dat precis medicin initi pmi work group report sept 17 2015 11</text>
+			</slide><slide><slideno>11</slideno>
+			<text>lh 19 fk 6 5 6 5 f6 6 genom lab test proteom social media phone imag vital sign devic mage overn wor mage public domain 12</text>
+			</slide><slide><slideno>12</slideno>
+			<text>6 f61ff6 l6k 99 93 wbl 6 wbl 2u yw 1 6 6 699c 6 l9 69 9z 5 e93 m8e f6 1k m8 9 cpwbl 9 5 e93 01 7f 7 5 7 9 af611 2u 9 k16 e5 13</text>
+			</slide><slide><slideno>13</slideno>
+			<text>6 f61ff6 l6k 99 93 wbl 6 wbl 2u yw 1 6 6 699c 6 l9 69 9z 6a 16 1o 9 93 nwxb 9 56176 o3 x6 6 l10k 9 yxlb9z 6 6 k06k o9 7 ygp z3 7 9 c7 6 9 right reserv content exclud creativ common licens inform https ocw mit faq fair oplinc right reserv content exclud creativ common licens inform https ocw mit faq fair 14</text>
+			</slide><slide><slideno>14</slideno>
+			<text>6 f61ff6 mage public domain 15</text>
+			</slide><slide><slideno>15</slideno>
+			<text>standard omop common data model v5 0 imag public domain 16</text>
+			</slide><slide><slideno>16</slideno>
+			<text>1 68 51 0k59 76 5 61 f6 6 1 57 6fh6 9 ne 9 01 9 m61 nomist 4tanford 7ision ac right reserv content exclud creativ common licens inform https ocw mit faq fair 17</text>
+			</slide><slide><slideno>17</slideno>
+			<text>breakthrough machin learn major advanc ml ai learn gh dimension featur l1 regular semi supervis unsupervis learn modern deep le arn techniqu convnet variant sgd democrat achin learn high qualiti op en sourc softwar python scikit learn tensorflow torch theano 18</text>
+			</slide><slide><slideno>18</slideno>
+			<text>19 rock health right reserv content exclud creativ common licens inform https ocw mit faq fair</text>
+			</slide><slide><slideno>19</slideno>
+			<text>20 nformat 4ervic right reserv content exclud creativ common licens inform https ocw mit faq fair</text>
+			</slide><slide><slideno>20</slideno>
+			<text>industri interest ml healthcar major acquisit big data ml merg 1 billion urchas ibm 2015 medic imag tr uven health alyt 2 6 billion purchas ibm 2016 health insur cl aim flatiron health 1 9 billion purchas roch 2018 electron health rec ord oncolog 21</text>
+			</slide><slide><slideno>21</slideno>
+			<text>outlin today class 1 histori ai ml healthcar 2 3 exampl ho ml transform healthcar 4 uniqu ab ml healthcar 5 overview cl ass syllabus 22</text>
+			</slide><slide><slideno>22</slideno>
+			<text>16 9c 17 1o 69e 5 6 5 61 5 9 68 5 193 tpvsdfvolopxo mmsjhiutsftfswfe5ijtdpoufoujtfydmvefegspnpv sfbujwf pnnpotmjdfotf psnpsfjogpsnbujpo tffiuuqtpdxnjufevifmqgbrgbjsvtf 23</text>
+			</slide><slide><slideno>23</slideno>
+			<text>24emerg depart limit resourc time sensit critic decis courtesi navi imag public domain</text>
+			</slide><slide><slideno>24</slideno>
+			<text>456 5 5 c0 01 8 5 5 9 9 1 69 6a 0 5 e6 q9 9 011 6 c0 01 0 07 6 f6a 9 1 16k l69 1 f6k 99 s61 6fh 19 9 1 7 6 11 19 b0 76 6 16 c1 7 1 5 6 5 1 1f l9 69 9 o7e 79 c6 k0 5 9 e6 0k5 5k5 b2b l1h 9 e6 b2b 25</text>
+			</slide><slide><slideno>25</slideno>
+			<text>456 5 5 c0 01 8 1 e6k6 9 e16 9 26 sourc unlnown right reserv content exclud creativ common licens inform https ocw mit faq fair</text>
+			</slide><slide><slideno>26</slideno>
+			<text>456 5 5 c0 01 8 sourc unlnown right reserv content exclud creativ common licens inform https ocw mit faq fair e6 5 6 9q f9 27</text>
+			</slide><slide><slideno>27</slideno>
+			<text>456 5 5 c0 01 8 f0 5 1 9e 6 9 90 9 output pneumonia posit 85 input chest ray imag chexnet 121 layer cnn b115o 576 lk01 9 01 93 6ie01861 6 61hh32 22 urr q2 6ie01861 6 61hh32 u2 q2 3akpurlar al right reserv content exclud creativ common licens inform https ocw mit faq fair 28</text>
+			</slide><slide><slideno>28</slideno>
+			<text>456 5 5 c0 01 8 b0 76 07 6 6 16k 1 5 7e 6 9 06 60 7e 29 sourc unlnown right reserv content exclud creativ common licens inform https ocw mit faq fair</text>
+			</slide><slide><slideno>29</slideno>
+			<text>16 9c 17 1o 69e 5 6 5 61 5 9 68 5 193 tpvsdfvolopxo mmsjhiutsftfswfe5ijtdpoufoujtfydmvefegspnpv sfbujwf pnnpotmjdfotf psnpsfjogpsnbujpo tffiuuqtpdxnjufevifmqgbrgbjsvtf 30</text>
+			</slide><slide><slideno>30</slideno>
+			<text>456 9 5 c0 01 5 1 6 51 f9 69 1 6 e6 q9 c0 01 f9 69 e1 k1 99 diseas burden 7 undiagnos condit courtesi cdc imag public domain lk01 1 3 5 e93 mmm 8 of9 69 e1 1 98 5 7 31</text>
+			</slide><slide><slideno>31</slideno>
+			<text>456 9 5 c0 01 5 1 6 51 f9 69 1 6 e6 q9 c0 01 f9 69 e1 k1 99 1 9 7 9 90 0 0 tu5a 61c 7a 6 7f d67 569 vu5a 1 7a 6 7f d67 569 progress krd treatment treatment patient condit respons treatment respons treatment diagnosi line treatment progress vrd 7 32</text>
+			</slide><slide><slideno>32</slideno>
+			<text>futur treat chronic diseas earli diagnosi diabet alzheim cancer continu monitor coach elder diabet psychiatr diseas discoveri diseas subtyp design drug target clinic trial 33</text>
+			</slide><slide><slideno>33</slideno>
+			<text>outlin today class 1 histori ai ml healthcar 2 3 exampl ho ml transform healthcar 4 uniqu ab ml healthcar 5 overview cl ass syllabus 34</text>
+			</slide><slide><slideno>34</slideno>
+			<text>make healthcar life death ecis robust alg orithm check ba lanc built ml deploy aris applic ai autonom drive fair ccountabl algorithm question ab unsupervis learn discov dis eas subtyp answer question character type peopl high readmit hospit uestion answer causal na ve upervis machin learn insuffici 35</text>
+			</slide><slide><slideno>35</slideno>
+			<text>make healthcar label ata motiv semi ervis learn algorithm sma ll number sampl rare diseas learn data healthi patient model pr oblem care lot miss ata vari time interv censor label 36</text>
+			</slide><slide><slideno>36</slideno>
+			<text>make healthcar difficulti de id entifi data data hare agreement sensit difficulti de ploy ml commerci ele ctronic health record softwar difficult modifi data silo recogn interoper slow progress care test iter need 37</text>
+			</slide><slide><slideno>37</slideno>
+			<text>goal semest intuit wo rking healthcar data set machin learn problem understand whi ch learn algorithm subtleti safe robust appli ml healthcar set research genda decad 38</text>
+			</slide><slide><slideno>38</slideno>
+			<text>6 s897 hst 956 6 874 class focus clinic data improv health care reason time scope deep applic life scienc recommend take 6 874 comput system biolog deep learn life scienc 39</text>
+			</slide><slide><slideno>39</slideno>
+			<text>mit opencoursewar https ocw mit 6 s897 hst 956 machin learn healthcar spring 2019 inform cite materi term visit https ocw mit term 40</text>
+		</slide>
+	</slides>
+	<source>dummy</source>
+</doc>
