@@ -20,17 +20,18 @@ def run_queries(index_filepath, queries):
 
 def main():
     # define file locations with these variables
-    data_filepath = "data/lec_1.xml"
-    clean_data_filepath = "clean/lec_1.clean.xml"
+    data_filepath = "data/MIT/"
+    clean_data_filepath = "clean/MIT/"
     index_filepath = "index/lec_1.index.txt"
 
-    run_queries(index_filepath, ["Obama"])
-    exit()
+    #run_queries(index_filepath, ["Obama"])
+    #exit()
 
     print("Cleaning data...")
     t0 = time.time()
     preprocess_xml(data_filepath, clean_data_filepath)
     print(f"Took {round(time.time() - t0, 2)}s")
+    exit()
 
 
     print("Creating index...")

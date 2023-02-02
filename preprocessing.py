@@ -1,3 +1,4 @@
+import os
 import re
 
 from stemming.porter2 import stem
@@ -43,38 +44,77 @@ def tokenize(line):
     return tokens
 
 
-def preprocess_xml(filein, fileout):
+def parseLectureElem(elem, stop_words):
+    for lecture_elem in elem:
+        if lecture_elem.tag != "lecture":
+            continue
+        for subelem in lecture_elem:
+            if subelem.tag == "lecture_title":
+                continue
+            elif subelem.tag == "lecture_pdf_url":
+                continue
+            elif subelem.tag == "lectureno":
+                print("Lecture " + subelem.text)
+                continue
+
+            for slide_elem in subelem:
+                slide_no, slide_text = list(slide_elem)
+                print("slide " + slide_no.text)
+                if not slide_text.text:
+                    continue
+                tokens = tokenize(slide_text.text)
+                # rint(repr(tokens))
+                # print(tokens)
+                new_text = ""
+                for t in tokens:
+                    if t.lower() not in stop_words:
+                        new_text += f"{stem(t.lower())} "
+                slide_text.text = new_text[:-1]
+                # print(subelem.tag, len(subelem.text))
+                # print(repr(subelem.text))
+    # print("-------")
+
+
+def preprocess_file_xml(filein, fileout):
     stop_words = set()
     with open("englishST.txt", "r", encoding='utf-8') as f:
         for l in f:
             stop_words.add(l[:-1])
-    #tree = ET.parse(filein)
-    import xml.etree.ElementTree as ET
-    from lxml import etree
+    tree = ET.parse(filein)
+    # &#65533;
 
-    parser = etree.XMLParser(recover=True, encoding='utf-8')
-    tree = ET.parse(filein, parser=parser)
-    #tree = ET.parse(filein, parser=ET.XMLParser(encoding='utf-8'))
+    #import xml.etree.ElementTree as ET
+    #from lxml import etree
+
+    #parser = etree.XMLParser(recover=True, encoding='utf-8')
+    #tree = ET.parse(filein, parser=parser)
+    # tree = ET.parse(filein, parser=ET.XMLParser(encoding='utf-8'))
     root = tree.getroot()
     # print(root.tag)
 
     for elem in root:
-        #print("=======")
-        #print(elem.tag)
-        if elem.tag != "slides":
+        # print("=======")
+        # print(elem.tag)
+        if elem.tag == "source":
+            source = elem.text
             continue
-        for subelem in elem:
-            print(subelem.tag)
-            slideno, slidetext = list(subelem)
-            tokens = tokenize(slidetext.text)
-            #rint(repr(tokens))
-            # print(tokens)
-            new_text = ""
-            for t in tokens:
-                if t.lower() not in stop_words:
-                    new_text += f"{stem(t.lower())} "
-            slidetext.text = new_text[:-1]
-            # print(subelem.tag, len(subelem.text))
-            # print(repr(subelem.text))
-        # print("-------")
+        elif elem.tag == "date":
+            date = elem.text
+            continue
+        elif elem.tag == "course":
+            continue
+        elif elem.tag == "lectures":
+            parseLectureElem(elem, stop_words)
+        elif elem.tag == "videos":
+            continue
     tree.write(fileout)
+
+
+def preprocess_xml(data_dir, output_dir):
+    files = os.scandir(data_dir)
+    for f in files:
+        inp_dir = data_dir + f.name
+        out_dir = output_dir + f.name
+        print(inp_dir)
+        preprocess_file_xml(inp_dir, out_dir)
+        #exit()
