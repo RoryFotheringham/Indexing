@@ -24,7 +24,8 @@ def create_index_xml(filein, fileout):
             # print(subelem.tag, len(subelem.text))
             slide_no, slidetext = list(subelem)
 
-            doc_no = lecture_no + int(slide_no.text)
+            # doc_no = lecture_no + int(slide_no.text)
+            doc_no = lecture_no
 
             # for clean data
             tokens = slidetext.text.split(" ")
