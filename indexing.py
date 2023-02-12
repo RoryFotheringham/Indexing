@@ -22,6 +22,7 @@ def create_index(data_dir, fileout):
         # exit()
 
     with open(fileout, 'w', encoding='utf-8') as w:
+        w.write(f"num_docs: {doc_no}\n")
         for k in sorted(term_freq):
             # print(f"{k}: {term_freq[k]}")
             w.write(f"{k}: {term_freq[k]}\n")
@@ -68,6 +69,8 @@ def indexLectureElem(root, doc_no, term_freq, term_doc_appearances, term_positio
         for elem in lecture_elem:
             # print("=======")
             # print(elem.tag)
+            if elem.tag == "lecture_title":
+                lecture_title = elem.text
             if elem.tag == "lectureno":
                 lecture_no += 1
                 # lecture_no = int(elem.text)
@@ -81,7 +84,7 @@ def indexLectureElem(root, doc_no, term_freq, term_doc_appearances, term_positio
 
                 # doc_no = lecture_no + int(slide_no.text)
                 if (current_doc_no != doc_no+lecture_no):
-                    print(doc_no+lecture_no, "- Lecture", lecture_no)
+                    print(doc_no+lecture_no, "-", lecture_title)
                 current_doc_no = doc_no + lecture_no
                 max_doc_no = max(max_doc_no, current_doc_no)
 
@@ -109,11 +112,14 @@ def indexLectureElem(root, doc_no, term_freq, term_doc_appearances, term_positio
                     counter += 1
     return max_doc_no
 
+
 def load_index(filein):
     term_freq = {}
     term_doc_appearances = {}
     term_positions = {}
     with open(filein, "r", encoding='utf-8') as f:
+        num_docs = int(f.readline().split(" ")[1].strip())
+        return Index(filein, num_docs)
         for line in f:
             if line[0] != '\t':
                 terms = line.split(": ")
@@ -134,4 +140,4 @@ def load_index(filein):
                 term_positions[(key, doc)] = set(positions)
                 # print("footer:", repr(int(terms[0])), repr(positions))
 
-    return Index(term_freq, term_doc_appearances, term_positions)
+    return Index(filein, num_docs, term_freq, term_doc_appearances, term_positions)

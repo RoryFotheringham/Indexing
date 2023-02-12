@@ -59,7 +59,8 @@ def parseLectureElem(elem, stop_words):
                 except:
                     subelem.text = re.sub(u"\u2013", "-", subelem.text).split("-")[0]
                 continue
-
+            elif subelem.tag != "slides":
+                continue
             for slide_elem in subelem:
                 slide_no, slide_text = list(slide_elem)
                 #print("slide " + slide_no.text)

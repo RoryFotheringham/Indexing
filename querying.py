@@ -58,7 +58,7 @@ def ranked_query(index: Index, query: str):
     # get the set of all documents to calculate score for
     docs_union = set()
     for term in terms:
-        docs = index.term_doc_appearances[term]
+        docs = index.getTermDocAppearances(term)
         docs_union = docs_union.union(docs)
 
     # calculate the score for each document
@@ -84,12 +84,12 @@ def calculate_score(index: Index, terms: [str], doc: int):
     score = 0
     for term in terms:
         # if this term does not appear in the given document then skip it
-        if doc not in index.term_doc_appearances[term]:
+        if doc not in index.getTermDocAppearances(term):
             continue
         # calculate term frequency
-        tf = len(index.term_positions[(term, doc)])
+        tf = len(index.getTermPositions((term, doc)))
         # calculate document frequency and inverse document frequency
-        df = index.term_freq[term]
+        df = index.getTermFreq(term)
         idf = math.log10(N / df)
         # finally, calculate the score and add it to the running total
         wtd = (1 + math.log10(tf)) * idf
@@ -112,8 +112,8 @@ def resolve_term(index: Index, term: str, not_flag=False):
     term = preprocessing.clean_line(term)
     # return the list of documents this term is in
     if not_flag:
-        return index.all_docs.difference(index.term_doc_appearances[term])
-    return index.term_doc_appearances[term]
+        return index.all_docs.difference(index.getTermDocAppearances(term))
+    return index.getTermDocAppearances(term)
 
 
 def resolve_phrase(index: Index, term: str, not_flag=False):
@@ -130,14 +130,14 @@ def resolve_phrase(index: Index, term: str, not_flag=False):
     right = preprocessing.clean_line(terms[1])
 
     # get the set of documents that contain both terms
-    left_docs = index.term_doc_appearances[left]
-    right_docs = index.term_doc_appearances[right]
+    left_docs = index.getTermDocAppearances(left)
+    right_docs = index.getTermDocAppearances(right)
     intersect = left_docs.intersection(right_docs)
     # for every document, check if the terms appear in the appropriate positions
     out = set()
     for doc in intersect:
-        for pos_left in index.term_positions[(left, doc)]:
-            if pos_left + 1 in index.term_positions[(right, doc)]:
+        for pos_left in index.getTermPositions((left, doc)):
+            if pos_left + 1 in index.getTermPositions((right, doc)):
                 out.add(doc)
                 break
 
@@ -166,15 +166,15 @@ def resolve_proximity(index, term):
     right = preprocessing.clean_line(terms[1])
 
     # get the set of documents that contain both terms
-    left_docs = index.term_doc_appearances[left]
-    right_docs = index.term_doc_appearances[right]
+    left_docs = index.getTermDocAppearances(left)
+    right_docs = index.getTermDocAppearances(right)
     intersect = left_docs.intersection(right_docs)
     # for every document, check if the terms appear in the appropriate positions
     out = set()
     for doc in intersect:
-        for pos_left in index.term_positions[(left, doc)]:
+        for pos_left in index.getTermPositions((left, doc)):
             brk = False
-            for pos_right in index.term_positions[(right, doc)]:
+            for pos_right in index.getTermPositions((right, doc)):
                 if abs(pos_left - pos_right) <= range:
                     out.add(doc)
                     brk = True
