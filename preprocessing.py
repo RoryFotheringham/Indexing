@@ -54,12 +54,15 @@ def parseLectureElem(elem, stop_words):
             elif subelem.tag == "lecture_pdf_url":
                 continue
             elif subelem.tag == "lectureno":
-                print("Lecture " + subelem.text)
+                try:
+                    int(subelem.text)
+                except:
+                    subelem.text = re.sub(u"\u2013", "-", subelem.text).split("-")[0]
                 continue
 
             for slide_elem in subelem:
                 slide_no, slide_text = list(slide_elem)
-                print("slide " + slide_no.text)
+                #print("slide " + slide_no.text)
                 if not slide_text.text:
                     continue
                 tokens = tokenize(slide_text.text)
@@ -115,6 +118,6 @@ def preprocess_xml(data_dir, output_dir):
     for f in files:
         inp_dir = data_dir + f.name
         out_dir = output_dir + f.name
-        print(inp_dir)
+        #print(inp_dir)
         preprocess_file_xml(inp_dir, out_dir)
         #exit()

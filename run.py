@@ -1,7 +1,7 @@
 import time
 import os
 
-from indexing import create_index_xml
+from indexing import create_index
 from preprocessing import preprocess_xml
 from querying import resolve_queries
 
@@ -22,7 +22,7 @@ def main():
     # define file locations with these variables
     data_filepath = "data/MIT/"
     clean_data_filepath = "clean/MIT/"
-    index_filepath = "index/lec_1.index.txt"
+    index_filepath = "index/MIT.index.txt"
 
     #run_queries(index_filepath, ["Obama"])
     #exit()
@@ -31,12 +31,12 @@ def main():
     t0 = time.time()
     preprocess_xml(data_filepath, clean_data_filepath)
     print(f"Took {round(time.time() - t0, 2)}s")
-    exit()
+    #exit()
 
 
     print("Creating index...")
     t0 = time.time()
-    create_index_xml(clean_data_filepath, index_filepath)
+    create_index(clean_data_filepath, index_filepath)
     print(f"Took {round(time.time() - t0, 2)}s")
     exit()
 
