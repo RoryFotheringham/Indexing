@@ -59,16 +59,19 @@ def create_index_xml(filein, doc_no, term_freq, term_doc_appearances, term_posit
 
 
 def indexLectureElem(root, doc_no, term_freq, term_doc_appearances, term_positions):
+    lecture_no = -1
+    current_doc_no = -1
     max_doc_no = doc_no
     for lecture_elem in root:
         if lecture_elem.tag != "lecture":
             continue
         for elem in lecture_elem:
-            print(elem)
             # print("=======")
             # print(elem.tag)
             if elem.tag == "lectureno":
-                lecture_no = int(elem.text)
+                lecture_no += 1
+                # lecture_no = int(elem.text)
+                pass
             if elem.tag != "slides":
                 continue
             counter = 1
@@ -77,8 +80,9 @@ def indexLectureElem(root, doc_no, term_freq, term_doc_appearances, term_positio
                 slide_no, slidetext = list(subelem)
 
                 # doc_no = lecture_no + int(slide_no.text)
+                if (current_doc_no != doc_no+lecture_no):
+                    print(doc_no+lecture_no, "- Lecture", lecture_no)
                 current_doc_no = doc_no + lecture_no
-                print(current_doc_no)
                 max_doc_no = max(max_doc_no, current_doc_no)
 
                 if not slidetext.text:
