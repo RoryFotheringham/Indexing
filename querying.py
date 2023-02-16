@@ -7,12 +7,12 @@ import indexing
 import preprocessing
 
 
-def resolve_queries(query_type, index_filein, query_filein, results_fileout):
+def resolve_queries(query_type, index_filein, queries, results_fileout):
     """
     Loads index and given query file, processes ranked queries and saves output to a given file location
     :param query_type: either 'boolean' or 'ranked'
     :param index_filein: text file to load index from
-    :param query_filein: text file to load queries from
+    :param queries: list of queries
     :param results_fileout: text file to save results to
     :return: None
     """
@@ -21,12 +21,6 @@ def resolve_queries(query_type, index_filein, query_filein, results_fileout):
     t0 = time.time()
     index = indexing.load_index(index_filein)
     print(f"Loading index took {round(time.time() - t0, 2)}s")
-
-    # read all the queries and store them in an array
-    queries = []
-    with open(query_filein, "r", encoding='utf-8') as f:
-        for line in f:
-            queries.append(line)
 
     # resolve each individual query using the loaded index and save results to output file
     with open(results_fileout, "w", encoding='utf-8') as f:
