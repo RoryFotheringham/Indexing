@@ -25,17 +25,15 @@ def resolve_queries(query_type, index_filein, queries, results_fileout):
     # resolve each individual query using the loaded index and save results to output file
     with open(results_fileout, "w", encoding='utf-8') as f:
         for q in queries:
-            splitted = q.split(" ", 1)
-            query_num = splitted[0]
             if query_type.lower() == "boolean":
-                result = boolean_query(index, splitted[1].strip())
+                result = boolean_query(index, q.strip())
                 for doc in result:
-                    f.write(f"{query_num},{doc}\n")
+                    f.write(f"{doc}\n")
                     # print(f"{query_num},{doc}")
             elif query_type.lower() == "ranked":
-                result = ranked_query(index, splitted[1].strip())
+                result = ranked_query(index, q.strip())
                 for doc, score in result:
-                    f.write(f"{query_num},{doc},{round(score, 4)}\n")
+                    f.write(f"{doc},{round(score, 4)}\n")
                     # print(f"{query_num},{doc},{round(score, 4)}")
     return
 

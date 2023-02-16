@@ -6,26 +6,16 @@ from preprocessing import preprocess_xml
 from querying import resolve_queries
 
 
-def run_queries(index_filepath, queries):
-    with open("temp.txt", "w") as f:
-        for i in range(len(queries)):
-            f.write(f"{i} {queries[i]}")
-
-    t0 = time.time()
-    resolve_queries("ranked", index_filepath, "temp.txt", "temp_results.txt")
-    print(f"Total runtime: {round(time.time() - t0, 2)}s")
-
-    os.remove("temp.txt")
-
-
 def main():
     # define file locations with these variables
     data_filepath = "data/MIT/"
     clean_data_filepath = "clean/MIT/"
     index_filepath = "index/MIT.index.txt"
 
-    #run_queries(index_filepath, ["Obama"])
-    #exit()
+    t0 = time.time()
+    resolve_queries("ranked", index_filepath, ["Obama"], "temp_results2.txt")
+    print(f"Total runtime: {round(time.time() - t0, 2)}s")
+    exit()
 
     print("Cleaning data...")
     t0 = time.time()
