@@ -1,6 +1,8 @@
+from email.mime import application
 import math
 import re
 import time
+from unittest import result
 
 from Index import Index
 import indexing
@@ -175,6 +177,80 @@ def resolve_proximity(index, term):
                 break
     return out
 
+def and_wrap(index: Index, term_1, term_2):
+    if isinstance(term_1, str):
+        term_1 = resolve_term(index, term_1)
+        
+    if isinstance(term_2, str):
+        term_2 = resolve_term(index, term_2)
+        
+    return term_1.intersection(term_2)
+
+def or_wrap(index: Index, term_1, term_2):
+    if isinstance(term_1, str):
+        term_1 = resolve_term(index, term_1)
+        
+    if isinstance(term_2, str):
+        term_2 = resolve_term(index, term_2)
+        
+    return term_1.union(term_2)
+
+def not_wrap(index: Index, term):
+    if isinstance(term, str):
+        term = resolve_term(index, term)
+        
+    return index.all_docs.difference(term)
+
+
+def bool_helper(index: Index, query):
+    opp_dict = {1 : ('NOT', not_wrap, 1),
+            2 : ('AND', and_wrap, 2),
+            3 : ('OR', or_wrap, 2)}
+    opp_index = 1
+    # TODO  resolve phrase search before splitting on spaces. 
+    terms = query.split(' ')
+    
+    def make_new_terms(terms, count, function, arity):
+        new_terms = []
+        if arity == 1:
+            application = function(index, terms[count+1])
+            for i in range(len(terms)):
+                if i == count+1:
+                    continue
+                elif i == count:
+                    new_terms.append(application)
+                else:
+                    new_terms.append(terms[i])
+            
+        if arity == 2:
+            application = function(index, terms[count-1], terms[count+1])
+            for i in range(len(terms)):
+                if i == count-1 or i == i+1:
+                    continue
+                elif i == count:
+                    new_terms.append(application)
+                else:
+                    new_terms.append(terms[i])
+        
+    #todo confirm the type of the query and implement the 
+    # necessary preprocessing before passing to bool_search
+    
+    def bool_search(terms, opp_index):
+        if len(terms) == 1:
+            return terms[0]
+        
+        while opp_index <= max(opp_dict.keys()):
+            opp, opp_func, opp_arity = opp_dict.get(opp_index)
+            for count, term in terms:
+                if term == opp:
+                    new_terms = make_new_terms(terms, count, opp_func, opp_arity)
+                    return bool_search(new_terms, opp_index)
+            opp_index += 1
+                
+                
+            
+        
+        
 
 def boolean_query(index: Index, query: str):
     terms = query
