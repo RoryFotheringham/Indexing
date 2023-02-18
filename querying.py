@@ -28,7 +28,7 @@ def resolve_queries(query_type, index_filein, queries, results_fileout):
     with open(results_fileout, "w", encoding='utf-8') as f:
         for q in queries:
             if query_type.lower() == "boolean":
-                result = boolean_query(index, q.strip())
+                result = bool_helper(index, q.strip())
                 for doc in result:
                     f.write(f"{doc}\n")
                     # print(f"{query_num},{doc}")
@@ -110,7 +110,8 @@ def resolve_term(index: Index, term: str, not_flag=False):
     return index.getTermDocAppearances(term)
 
 
-def resolve_phrase(index: Index, term: str, not_flag=False):
+def resolve_phrase(index: Index, term: str, not_flag=False):    #currently only works for
+                                                                #exactly 2 terms.  
     """
     Returns the set of documents that a phrase is in
     :param index: Index object
@@ -203,12 +204,16 @@ def not_wrap(index: Index, term):
 
 
 def bool_helper(index: Index, query):
+    
     opp_dict = {1 : ('NOT', not_wrap, 1),
             2 : ('AND', and_wrap, 2),
             3 : ('OR', or_wrap, 2)}
     opp_index = 1
     # TODO  resolve phrase search before splitting on spaces. 
     terms = query.split(' ')
+    
+    if len(terms) == 1: 
+        return index.getTermDocAppearances(terms[0])
     
     def make_new_terms(terms, count, function, arity):
         new_terms = []
@@ -225,13 +230,14 @@ def bool_helper(index: Index, query):
         if arity == 2:
             application = function(index, terms[count-1], terms[count+1])
             for i in range(len(terms)):
-                if i == count-1 or i == i+1:
+                if i == count-1 or i == count+1:
                     continue
                 elif i == count:
                     new_terms.append(application)
                 else:
                     new_terms.append(terms[i])
         
+        return new_terms
     #todo confirm the type of the query and implement the 
     # necessary preprocessing before passing to bool_search
     
@@ -241,11 +247,17 @@ def bool_helper(index: Index, query):
         
         while opp_index <= max(opp_dict.keys()):
             opp, opp_func, opp_arity = opp_dict.get(opp_index)
-            for count, term in terms:
+            for count, term in enumerate(terms):
                 if term == opp:
-                    new_terms = make_new_terms(terms, count, opp_func, opp_arity)
+                    try:
+                        new_terms = make_new_terms(terms, count, opp_func, opp_arity)
+                    except IndexError:
+                        print('badly formed boolean query query')
+                        return {}
                     return bool_search(new_terms, opp_index)
             opp_index += 1
+        
+    return bool_search(terms, opp_index)
                 
                 
             
