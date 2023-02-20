@@ -1,3 +1,4 @@
+from calendar import c
 from email.mime import application
 import math
 import re
@@ -39,6 +40,55 @@ def resolve_queries(query_type, index_filein, queries, results_fileout):
                     # print(f"{query_num},{doc},{round(score, 4)}")
     return
 
+
+def preprocess_boolean_query(index, raw_query):
+    '''
+    takes a raw query string for a boolean query and resolves each phrase.
+    takes this:  'probability AND "Discrete mathematics" OR "baysian statistic 
+    into this => ['probability', 'AND', __set_of_results__, 'OR', __set_of_results__]
+    
+    :param index: Index
+    :param raw_query: str query formatted like s"
+    '''
+    open = False
+    start = 0
+    end = 0
+    curr_phrase = ''
+    curr_query = ''
+    total = []
+    for char in raw_query:
+        if open:
+            curr_phrase = curr_phrase + char
+        else:
+            new_query = new_query + char
+            
+        if char == '"' and not open:
+            open = True
+            total.append(curr_query)
+            curr_query = ''
+            
+        if char == '"' and open:
+            open = False
+            total.append(phrase_search(curr_phrase))
+            curr_phrase = ''
+            
+    processed_query = []
+    for chunk in total:
+        if isinstance(chunk,str):
+            temp = chunk.strip().split(' ')
+            for term in temp:
+                processed_query.append(term)
+        if isinstance(chunk,set):
+            processed_query.append(chunk)
+            
+    return processed_query
+            
+        
+            
+            
+            
+            
+        
 
 def ranked_query(index: Index, query: str):
     """
@@ -178,6 +228,22 @@ def resolve_proximity(index, term):
                 break
     return out
 
+def phrase_search(index, query):
+    '''
+    helper function for calling recursive function phrase_search
+    
+    :param index: Index
+    :param query: tokenized [str]
+    '''
+    
+    
+    
+    paths = resolve_term(query[0])
+    
+    
+    
+    
+
 def and_wrap(index: Index, term_1, term_2):
     if isinstance(term_1, str):
         term_1 = resolve_term(index, term_1)
@@ -204,6 +270,13 @@ def not_wrap(index: Index, term):
 
 
 def bool_helper(index: Index, query):
+    '''
+    high level function for boolean search 
+    - initialises special functions used in bool search and calls the function
+    
+    :param query: untokenised raw string query
+    :param index: Index
+    '''
     
     opp_dict = {1 : ('NOT', not_wrap, 1),
             2 : ('AND', and_wrap, 2),
@@ -216,6 +289,16 @@ def bool_helper(index: Index, query):
         return index.getTermDocAppearances(terms[0])
     
     def make_new_terms(terms, count, function, arity):
+        '''
+        constructs a new list which on which bool search is
+        called recursively. It replaces specified terms with a 
+        wrapper function application wrt the given operator. 
+        
+        :param terms: [str|set] query being worked on 
+        :param count: int position of the operator
+        :param function: wrapper fucntion variable which is applied to terms
+        :param arity: the arity of the given function 
+        '''
         new_terms = []
         if arity == 1:
             application = function(index, terms[count+1])
@@ -242,6 +325,12 @@ def bool_helper(index: Index, query):
     # necessary preprocessing before passing to bool_search
     
     def bool_search(terms, opp_index):
+        '''
+        recursively called on a list of terms which are repeatedly simplified through operator applications
+        
+        :param terms: [str|set] query being processed
+        :param opp_index: dictionary storing the order of operations
+        '''
         if len(terms) == 1:
             return terms[0]
         
