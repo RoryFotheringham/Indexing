@@ -44,6 +44,38 @@ def tokenize(line):
     return tokens
 
 
+def parseSlides(subelem, stop_words):
+    for slide_elem in subelem:
+        slide_no, slide_text = list(slide_elem)
+        # print("slide " + slide_no.text)
+        if not slide_text.text:
+            continue
+        tokens = tokenize(slide_text.text)
+        # rint(repr(tokens))
+        # print(tokens)
+        new_text = ""
+        for t in tokens:
+            if t.lower() not in stop_words:
+                new_text += f"{stem(t.lower())} "
+        slide_text.text = new_text[:-1]
+
+
+def parseVideos(subelem, stop_words):
+    for slide_elem in subelem:
+        video_url, video_title, video_text = list(slide_elem)
+        # print("slide " + slide_no.text)
+        if not video_text.text:
+            continue
+        tokens = tokenize(video_text.text)
+        # rint(repr(tokens))
+        # print(tokens)
+        new_text = ""
+        for t in tokens:
+            if t.lower() not in stop_words:
+                new_text += f"{stem(t.lower())} "
+        video_text.text = new_text[:-1]
+
+
 def parseLectureElem(elem, stop_words):
     for lecture_elem in elem:
         if lecture_elem.tag != "lecture":
@@ -59,21 +91,12 @@ def parseLectureElem(elem, stop_words):
                 except:
                     subelem.text = re.sub(u"\u2013", "-", subelem.text).split("-")[0]
                 continue
-            elif subelem.tag != "slides":
+            elif subelem.tag == "slides":
+                parseSlides(subelem, stop_words)
+            elif subelem.tag == "videos":
+                parseVideos(subelem, stop_words)
+            else:
                 continue
-            for slide_elem in subelem:
-                slide_no, slide_text = list(slide_elem)
-                #print("slide " + slide_no.text)
-                if not slide_text.text:
-                    continue
-                tokens = tokenize(slide_text.text)
-                # rint(repr(tokens))
-                # print(tokens)
-                new_text = ""
-                for t in tokens:
-                    if t.lower() not in stop_words:
-                        new_text += f"{stem(t.lower())} "
-                slide_text.text = new_text[:-1]
                 # print(subelem.tag, len(subelem.text))
                 # print(repr(subelem.text))
     # print("-------")
@@ -109,14 +132,14 @@ def preprocess_file_xml(filein, fileout):
             continue
         elif elem.tag == "lectures":
             parseLectureElem(elem, stop_words)
-        elif elem.tag == "videos":
-            continue
     tree.write(fileout)
 
 
 def preprocess_xml(data_dir, output_dir):
     files = os.scandir(data_dir)
     for f in files:
+        if "xml" not in f.name:
+            continue
         inp_dir = data_dir + f.name
         out_dir = output_dir + f.name
         #print(inp_dir)

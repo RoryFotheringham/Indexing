@@ -11,11 +11,14 @@ def main():
     data_filepath = "data/MIT/"
     clean_data_filepath = "clean/MIT/"
     index_filepath = "index/MIT.index.txt"
+    # data_filepath = "data/KHAN_ACADEMY/"
+    # clean_data_filepath = "clean/KHAN_ACADEMY/"
+    # index_filepath = "index/KHAN_ACADEMY.index.txt"
 
-    t0 = time.time()
-    resolve_queries("ranked", index_filepath, ["Obama"], "temp_results2.txt")
-    print(f"Total runtime: {round(time.time() - t0, 2)}s")
-    exit()
+    #t0 = time.time()
+    #resolve_queries("ranked", index_filepath, ["obama"], "temp_results2.txt")
+    #print(f"Total runtime: {round(time.time() - t0, 2)}s")
+    #exit()
 
     print("Cleaning data...")
     t0 = time.time()

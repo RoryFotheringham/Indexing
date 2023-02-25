@@ -2,7 +2,7 @@ from collections import deque
 
 
 class Index:
-    def __init__(self, index_filename, num_docs, term_freq = {}, term_doc_appearances = {}, term_positions = {}, max_cache_size=1000):
+    def __init__(self, index_filename, num_docs, term_freq={}, term_doc_appearances={}, term_positions={}, max_cache_size=1000):
         """
         :param term_freq: num of docs term appears in
         :param term_doc_appearances: docs that a term appears in
