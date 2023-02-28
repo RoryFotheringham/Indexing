@@ -44,7 +44,7 @@ def resolve_queries(query_type, index_filein, queries, results_fileout):
 def preprocess_boolean_query(index, raw_query):
     '''
     takes a raw query string for a boolean query and resolves each phrase.
-    takes this:  'probability AND "Discrete mathematics" OR "baysian statistic 
+    takes this:  'probability AND "Discrete mathematics" OR "baysian statistic"
     into this => ['probability', 'AND', __set_of_results__, 'OR', __set_of_results__]
     
     :param index: Index
@@ -57,26 +57,33 @@ def preprocess_boolean_query(index, raw_query):
     curr_query = ''
     total = []
     for char in raw_query:
-        if open:
-            curr_phrase = curr_phrase + char
-        else:
-            new_query = new_query + char
-            
+        
         if char == '"' and not open:
             open = True
             total.append(curr_query)
             curr_query = ''
-            
-        if char == '"' and open:
-            open = False
-            total.append(phrase_search(curr_phrase))
-            curr_phrase = ''
+        else:
+            if char == '"' and open:
+                open = False
+                total.append(phrase_search(index, curr_phrase))
+                curr_phrase = ''
+        
+        
+        if open and char != '"':
+            curr_phrase = curr_phrase + char
+        else:
+            if char != '"':
+                curr_query = curr_query + char
+    total.append(curr_query)
+        
             
     processed_query = []
     for chunk in total:
         if isinstance(chunk,str):
             temp = chunk.strip().split(' ')
             for term in temp:
+                if term == '':
+                    continue
                 processed_query.append(term)
         if isinstance(chunk,set):
             processed_query.append(chunk)
@@ -228,20 +235,58 @@ def resolve_proximity(index, term):
                 break
     return out
 
-def phrase_search(index, query):
+def phrase_search(index: Index, query):
     '''
     helper function for calling recursive function phrase_search
     
     :param index: Index
     :param query: tokenized [str]
     '''
+    query = preprocessing.clean_line(query)
+    terms = query.split(' ')
+    if terms == []:
+        return set()
+    
+    seed = terms[0]
+    
+    appearances = index.getTermDocAppearances(seed)
+    if not appearances:
+        return set()
+    tups = []
+    for app in appearances:
+        positions = index.getTermPositions((seed, app))
+        for pos in positions:
+            tups.append((app, pos))
+    
+    results = []
+    for tup in tups:
+        result = phrase_search_recur(index, tup, terms[1:]) 
+        if result != (-1, -1):
+            results.append(result)
+    return set(results)
     
     
+def phrase_search_recur(index: Index, tup, rest_of_phrase: [str]):
+    if rest_of_phrase == []:
+        return tup[0] 
     
-    paths = resolve_term(query[0])
+    seed = rest_of_phrase[0]
+    terms = rest_of_phrase[1:]
+    prev_doc = tup[0]
+    prev_pos = tup[1]
     
-    
-    
+    appearences = index.getTermDocAppearances(seed)
+    if not appearences:
+        return (-1, -1)
+    else:
+        for app in appearences:
+            if app == prev_doc:
+                positions = index.getTermPositions((seed, app))
+                for pos in positions:
+                    if pos == prev_pos+1:
+                        return phrase_search_recur(index, (app, pos), terms)
+        return (-1, -1)
+            
     
 
 def and_wrap(index: Index, term_1, term_2):
@@ -282,11 +327,18 @@ def bool_helper(index: Index, query):
             2 : ('AND', and_wrap, 2),
             3 : ('OR', or_wrap, 2)}
     opp_index = 1
-    # TODO  resolve phrase search before splitting on spaces. 
-    terms = query.split(' ')
     
-    if len(terms) == 1: 
-        return index.getTermDocAppearances(terms[0])
+    terms = preprocess_boolean_query(index, query)
+    
+    
+    
+    if len(terms) == 1:
+        if isinstance(terms, str): 
+            return index.getTermDocAppearances(terms[0])
+        elif isinstance(terms, set):
+            return terms[0]
+    
+    
     
     def make_new_terms(terms, count, function, arity):
         '''
