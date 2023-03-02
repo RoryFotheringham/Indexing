@@ -69,7 +69,7 @@ def indexText(slide_text, doc_no, counter, term_freq, term_doc_appearances, term
         return counter
     # for clean data
     tokens = slide_text.text.split(" ")
-    # for only tokenizing and casefolding
+    # for only tokenizing and case folding
     # tokens = preprocessing.tokenize(subelem.text.lower())
     for t in tokens:
         # add term to doc appearance dictionary
@@ -109,13 +109,15 @@ def indexLecturesElem(root, doc_no, term_freq, term_doc_appearances, term_positi
             elif elem.tag == "slides":
                 for subelem in elem:
                     slide_no, slide_text = list(subelem)
-                    print(f"Slide {slide_no.text.strip()}")
+                    # print(f"Slide {slide_no.text.strip()}")
                     counter = indexText(slide_text, lecture_no, counter, term_freq, term_doc_appearances, term_positions)
             elif elem.tag == "videos":
                 for subelem in elem:
-                    video_url, video_title, video_text = list(subelem)
-                    print(f"Video {video_title.text}")
-                    counter = indexText(video_text, lecture_no, counter, term_freq, term_doc_appearances, term_positions)
+                    video_url, video_title, video_transcript = list(subelem)
+                    # print(f"Video - {video_title.text}")
+                    for video_slice in video_transcript:
+                        time_slice, slice_text = list(video_slice)
+                        counter = indexText(slice_text, lecture_no, counter, term_freq, term_doc_appearances, term_positions)
             else:
                 continue
             """
