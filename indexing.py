@@ -54,22 +54,19 @@ def create_index_xml(filein, doc_no, term_freq, term_doc_appearances, term_posit
         elif elem.tag == "course":
             continue
         elif elem.tag == "lectures":
-            max_doc_no = indexLectureElem(elem, doc_no, term_freq, term_doc_appearances, term_positions)
+            max_doc_no = indexLecturesElem(elem, doc_no, term_freq, term_doc_appearances, term_positions)
         elif elem.tag == "videos":
             continue
 
     return max_doc_no+1
 
 
-def indexText(slide_text, lecture_no, doc_no, max_doc_no, counter, term_freq, term_doc_appearances, term_positions):
+def indexText(slide_text, doc_no, counter, term_freq, term_doc_appearances, term_positions):
     # doc_no = lecture_no + int(slide_no.text)
     # if (current_doc_no != doc_no+lecture_no):
     #     print(doc_no+lecture_no, "-", lecture_title)
-    current_doc_no = doc_no + lecture_no
-    max_doc_no = max(max_doc_no, current_doc_no)
-
     if not slide_text.text:
-        return max_doc_no
+        return counter
     # for clean data
     tokens = slide_text.text.split(" ")
     # for only tokenizing and casefolding
@@ -77,24 +74,25 @@ def indexText(slide_text, lecture_no, doc_no, max_doc_no, counter, term_freq, te
     for t in tokens:
         # add term to doc appearance dictionary
         if t in term_doc_appearances:
-            term_doc_appearances[t].add(current_doc_no)
+            term_doc_appearances[t].add(doc_no)
         else:
-            term_doc_appearances[t] = {current_doc_no}
+            term_doc_appearances[t] = {doc_no}
 
         # add term to frequency dictionary
         term_freq[t] = len(term_doc_appearances[t])
 
         # add term to positions dictionary
-        if (t, current_doc_no) in term_positions:
-            term_positions[(t, current_doc_no)].append(counter)
+        if (t, doc_no) in term_positions:
+            term_positions[(t, doc_no)].append(counter)
         else:
-            term_positions[(t, current_doc_no)] = [counter]
-    return max_doc_no
+            term_positions[(t, doc_no)] = [counter]
+
+        counter += 1
+    return counter
 
 
-def indexLectureElem(root, doc_no, term_freq, term_doc_appearances, term_positions):
-    lecture_no = -1
-    max_doc_no = doc_no
+def indexLecturesElem(root, doc_no, term_freq, term_doc_appearances, term_positions):
+    lecture_no = doc_no - 1
     counter = 1
     for lecture_elem in root:
         if lecture_elem.tag != "lecture":
@@ -106,23 +104,18 @@ def indexLectureElem(root, doc_no, term_freq, term_doc_appearances, term_positio
                 lecture_title = elem.text
             elif elem.tag == "lectureno":
                 lecture_no += 1
-                print(doc_no+lecture_no, "-", lecture_title)
+                print(lecture_no, "-", lecture_title)
                 # lecture_no = int(elem.text)
-                pass
             elif elem.tag == "slides":
                 for subelem in elem:
                     slide_no, slide_text = list(subelem)
                     print(f"Slide {slide_no.text.strip()}")
-                    max_doc_no = indexText(slide_text, lecture_no, doc_no, max_doc_no, counter, term_freq, term_doc_appearances, term_positions)
-                    counter += 1
-                continue
+                    counter = indexText(slide_text, lecture_no, counter, term_freq, term_doc_appearances, term_positions)
             elif elem.tag == "videos":
                 for subelem in elem:
                     video_url, video_title, video_text = list(subelem)
                     print(f"Video {video_title.text}")
-                    max_doc_no = indexText(video_text, lecture_no, doc_no, max_doc_no, counter, term_freq, term_doc_appearances, term_positions)
-                    counter += 1
-                continue
+                    counter = indexText(video_text, lecture_no, counter, term_freq, term_doc_appearances, term_positions)
             else:
                 continue
             """
@@ -158,7 +151,7 @@ def indexLectureElem(root, doc_no, term_freq, term_doc_appearances, term_positio
                         term_positions[(t, current_doc_no)] = [counter]
                     counter += 1
             """
-    return max_doc_no
+    return lecture_no
 
 
 def load_index(filein):
