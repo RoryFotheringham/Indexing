@@ -1,6 +1,7 @@
 import os
 import xml.etree.ElementTree as ET
 from Index import Index
+from pairing_functions import szudzik
 
 
 def create_index(data_dir, fileout):
@@ -12,6 +13,8 @@ def create_index(data_dir, fileout):
     term_doc_appearances = {}
     # positions of appearances of term in each doc
     term_positions = {}
+    term_doc_slides = {}
+    term_doc_videos = {}
     doc_no = 0
     for f in files:
         if "xml" not in f.name:
@@ -20,7 +23,7 @@ def create_index(data_dir, fileout):
         print("===============================================")
         print(inp_dir)
         print(doc_no)
-        doc_no = create_index_xml(inp_dir, doc_no, term_freq, term_doc_appearances, term_positions)
+        doc_no = create_index_xml(inp_dir, doc_no, term_freq, term_doc_appearances, term_positions, term_doc_slides, term_doc_videos)
         # exit()
 
     with open(fileout, 'w', encoding='utf-8') as w:
@@ -37,7 +40,7 @@ def create_index(data_dir, fileout):
                 w.write(line)
 
 
-def create_index_xml(filein, doc_no, term_freq, term_doc_appearances, term_positions):
+def create_index_xml(filein, doc_no, term_freq, term_doc_appearances, term_positions, td_slides, td_videos):
     tree = ET.parse(filein)
     root = tree.getroot()
     # print(root.tag)
@@ -54,12 +57,47 @@ def create_index_xml(filein, doc_no, term_freq, term_doc_appearances, term_posit
         elif elem.tag == "course":
             continue
         elif elem.tag == "lectures":
-            max_doc_no = indexLecturesElem(elem, doc_no, term_freq, term_doc_appearances, term_positions)
+            max_doc_no = indexLecturesElem(elem, doc_no, term_freq, term_doc_appearances, term_positions, td_slides, td_videos)
         elif elem.tag == "videos":
             continue
 
     return max_doc_no+1
 
+def     index_sv_text(slide_text, doc_no, sv_no, dictionary):
+    """_summary_ adds a slide number to the (slide|video)_term_doc dictionary 
+    for each term
+
+    Args:
+        dictionary (dict): either the (slide|video)_term_doc <term:<doc:[slide|video]>> 
+        doc_no (_type_): _description_
+        counter (_type_): _description_
+        term_freq (_type_): _description_
+        
+
+    Returns:
+        _type_: _description_
+    """
+    # doc_no = lecture_no + int(slide_no.text)
+    # if (current_doc_no != doc_no+lecture_no):
+    #     print(doc_no+lecture_no, "-", lecture_title)
+    if not slide_text.text:
+        return sv_no
+    # for clean data
+    tokens = slide_text.text.split(" ")
+    # for only tokenizing and case folding
+    # tokens = preprocessing.tokenize(subelem.text.lower())
+    for t in tokens:
+        # add term to doc appearance dictionary
+        if t in dictionary:
+            if dictionary[t].get(doc_no): # pairing function is a bad idea i should number them sequentially
+                dictionary[t][doc_no].append(szudzik.pair(doc_no, sv_no))
+            else:
+                dictionary[t].update({doc_no: [szudzik.pair(doc_no, sv_no)]})
+        else:
+            dictionary[t] = {doc_no: [szudzik.pair(doc_no, sv_no)]}
+        
+    sv_no += 1
+    return sv_no
 
 def indexText(slide_text, doc_no, counter, term_freq, term_doc_appearances, term_positions):
     # doc_no = lecture_no + int(slide_no.text)
@@ -91,7 +129,7 @@ def indexText(slide_text, doc_no, counter, term_freq, term_doc_appearances, term
     return counter
 
 
-def indexLecturesElem(root, doc_no, term_freq, term_doc_appearances, term_positions):
+def indexLecturesElem(root, doc_no, term_freq, term_doc_appearances, term_positions, td_slides, td_videos):
     lecture_no = doc_no - 1
     counter = 1
     for lecture_elem in root:
@@ -107,16 +145,21 @@ def indexLecturesElem(root, doc_no, term_freq, term_doc_appearances, term_positi
                 print(lecture_no, "-", lecture_title)
                 # lecture_no = int(elem.text)
             elif elem.tag == "slides":
+                local_slide_no = 1
                 for subelem in elem:
                     slide_no, slide_text = list(subelem)
                     # print(f"Slide {slide_no.text.strip()}")
+                    local_slide_no = index_sv_text(slide_text, lecture_no, local_slide_no, td_slides)
                     counter = indexText(slide_text, lecture_no, counter, term_freq, term_doc_appearances, term_positions)
+                    
             elif elem.tag == "videos":
+                local_video_no = 1
                 for subelem in elem:
                     video_url, video_title, video_transcript = list(subelem)
                     # print(f"Video - {video_title.text}")
                     for video_slice in video_transcript:
                         time_slice, slice_text = list(video_slice)
+                        local_video_no = index_sv_text(slice_text, lecture_no, local_video_no, td_videos)
                         counter = indexText(slice_text, lecture_no, counter, term_freq, term_doc_appearances, term_positions)
             else:
                 continue

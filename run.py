@@ -8,7 +8,7 @@ from querying import resolve_queries
 
 def main():
     # define file locations with these variables
-    data_filepath = "data/MIT/"
+    data_filepath = "../TTDS-Group-Proj/Scraping/MIT/"
     clean_data_filepath = "clean/MIT/"
     index_filepath = "index/MIT.index.txt"
     # data_filepath = "data/KHAN_ACADEMY/"
