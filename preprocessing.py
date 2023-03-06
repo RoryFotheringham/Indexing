@@ -62,18 +62,20 @@ def parseSlides(subelem, stop_words):
 
 def parseVideos(subelem, stop_words):
     for slide_elem in subelem:
-        video_url, video_title, video_text = list(slide_elem)
-        # print("slide " + slide_no.text)
-        if not video_text.text:
-            continue
-        tokens = tokenize(video_text.text)
-        # rint(repr(tokens))
-        # print(tokens)
-        new_text = ""
-        for t in tokens:
-            if t.lower() not in stop_words:
-                new_text += f"{stem(t.lower())} "
-        video_text.text = new_text[:-1]
+        video_url, video_title, video_transcript = list(slide_elem)
+        for video_slice in video_transcript:
+            time_slice, slice_text = list(video_slice)
+            # print("slide " + slide_no.text)
+            if not slice_text.text:
+                continue
+            tokens = tokenize(slice_text.text)
+            # rint(repr(tokens))
+            # print(tokens)
+            new_text = ""
+            for t in tokens:
+                if t.lower() not in stop_words:
+                    new_text += f"{stem(t.lower())} "
+            slice_text.text = new_text[:-1]
 
 
 def parseLectureElem(elem, stop_words):
