@@ -66,6 +66,48 @@ def create_index_xml(filein, doc_no, term_freq, term_doc_appearances, term_posit
     return max_doc_no + 1, sv_no
 
 
+def indexLecturesElem(root, doc_no, term_freq, term_doc_appearances, term_positions, term_doc_sv, sv_no):
+    lecture_no = doc_no - 1
+    counter = 1
+    for lecture_elem in root:
+        if lecture_elem.tag != "lecture":
+            continue
+        for elem in lecture_elem:
+            # print("=======")
+            # print(elem.tag)
+            if elem.tag == "lecture_title":
+                lecture_title = elem.text
+            elif elem.tag == "lectureno":
+                lecture_no += 1
+                print(lecture_no, "-", lecture_title)
+                # lecture_no = int(elem.text)
+            elif elem.tag == "slides":
+
+                for subelem in elem:
+                    print(f'\t\tslide_video_number: {sv_no}')
+                    slide_no, slide_text = list(subelem)
+                    # print(f"Slide {slide_no.text.strip()}")
+                    sv_no = index_sv_text(slide_text, lecture_no, term_doc_sv, sv_no)
+                    counter = indexText(slide_text, lecture_no, counter, term_freq, term_doc_appearances,
+                                        term_positions)
+
+            elif elem.tag == "videos":
+                # local_video_no = 1
+
+                for subelem in elem:
+                    video_url, video_title, video_transcript = list(subelem)
+                    print(f'\t\tslide_video_number: {sv_no}')
+                    # print(f"Video - {video_title.text}")
+                    for video_slice in video_transcript:
+                        time_slice, slice_text = list(video_slice)
+                        sv_no = index_sv_text(slice_text, lecture_no, term_doc_sv, sv_no)
+                        counter = indexText(slice_text, lecture_no, counter, term_freq, term_doc_appearances,
+                                            term_positions)
+            else:
+                continue
+    return lecture_no, sv_no
+
+
 def index_sv_text(slide_text, doc_no, dictionary, sv_no):
     """_summary_ adds a slide number to the (slide|video)_term_doc dictionary 
     for each term
@@ -133,81 +175,6 @@ def indexText(slide_text, doc_no, counter, term_freq, term_doc_appearances, term
     return counter
 
 
-def indexLecturesElem(root, doc_no, term_freq, term_doc_appearances, term_positions, term_doc_sv, sv_no):
-    lecture_no = doc_no - 1
-    counter = 1
-    for lecture_elem in root:
-        if lecture_elem.tag != "lecture":
-            continue
-        for elem in lecture_elem:
-            # print("=======")
-            # print(elem.tag)
-            if elem.tag == "lecture_title":
-                lecture_title = elem.text
-            elif elem.tag == "lectureno":
-                lecture_no += 1
-                print(lecture_no, "-", lecture_title)
-                # lecture_no = int(elem.text)
-            elif elem.tag == "slides":
-
-                for subelem in elem:
-                    print(f'\t\tslide_video_number: {sv_no}')
-                    slide_no, slide_text = list(subelem)
-                    # print(f"Slide {slide_no.text.strip()}")
-                    sv_no = index_sv_text(slide_text, lecture_no, term_doc_sv, sv_no)
-                    counter = indexText(slide_text, lecture_no, counter, term_freq, term_doc_appearances,
-                                        term_positions)
-
-            elif elem.tag == "videos":
-                # local_video_no = 1
-
-                for subelem in elem:
-                    video_url, video_title, video_transcript = list(subelem)
-                    print(f'\t\tslide_video_number: {sv_no}')
-                    # print(f"Video - {video_title.text}")
-                    for video_slice in video_transcript:
-                        time_slice, slice_text = list(video_slice)
-                        sv_no = index_sv_text(slice_text, lecture_no, term_doc_sv, sv_no)
-                        counter = indexText(slice_text, lecture_no, counter, term_freq, term_doc_appearances,
-                                            term_positions)
-            else:
-                continue
-            """
-            counter = 1
-            for subelem in elem:
-                # print(subelem.tag, len(subelem.text))
-                slide_no, slidetext = list(subelem)
-
-                # doc_no = lecture_no + int(slide_no.text)
-                current_doc_no = doc_no + lecture_no
-                max_doc_no = max(max_doc_no, current_doc_no)
-
-                if not slidetext.text:
-                    continue
-                # for clean data
-                tokens = slidetext.text.split(" ")
-                # for only tokenizing and casefolding
-                # tokens = preprocessing.tokenize(subelem.text.lower())
-                for t in tokens:
-                    # add term to doc appearance dictionary
-                    if t in term_doc_appearances:
-                        term_doc_appearances[t].add(current_doc_no)
-                    else:
-                        term_doc_appearances[t] = {current_doc_no}
-
-                    # add term to frequency dictionary
-                    term_freq[t] = len(term_doc_appearances[t])
-
-                    # add term to positions dictionary
-                    if (t, current_doc_no) in term_positions:
-                        term_positions[(t, current_doc_no)].append(counter)
-                    else:
-                        term_positions[(t, current_doc_no)] = [counter]
-                    counter += 1
-            """
-    return lecture_no, sv_no
-
-
 def load_index(filein):
     term_freq = {}
     term_doc_appearances = {}
@@ -215,6 +182,7 @@ def load_index(filein):
     with open(filein, "r", encoding='utf-8') as f:
         num_docs = int(f.readline().split(" ")[1].strip())
         return Index(filein, num_docs)
+    """
         for line in f:
             if line[0] != '\t':
                 terms = line.split(": ")
@@ -234,5 +202,5 @@ def load_index(filein):
                 positions = [int(s) for s in terms[1].split(',')]
                 term_positions[(key, doc)] = set(positions)
                 # print("footer:", repr(int(terms[0])), repr(positions))
-
     return Index(filein, num_docs, term_freq, term_doc_appearances, term_positions)
+    """
