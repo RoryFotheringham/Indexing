@@ -1,7 +1,6 @@
 import os
 import xml.etree.ElementTree as ET
 from Index import Index
-from pairing_functions import szudzik
 
 
 def create_index(data_dir, fileout):
