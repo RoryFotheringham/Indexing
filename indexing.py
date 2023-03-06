@@ -15,7 +15,7 @@ def create_index(data_dir, fileout):
     term_positions = {}
     term_doc_sv = {}
     # term_doc_videos = {}
-    doc_no = 0
+    doc_no = 1
     sv_no = 1
     for f in files:
         if "xml" not in f.name:
