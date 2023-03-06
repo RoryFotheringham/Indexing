@@ -20,11 +20,11 @@ def main():
     #print(f"Total runtime: {round(time.time() - t0, 2)}s")
     #exit()
 
-    print("Cleaning data...")
-    t0 = time.time()
-    preprocess_xml(data_filepath, clean_data_filepath)
-    print(f"Took {round(time.time() - t0, 2)}s")
-    #exit()
+    # print("Cleaning data...")
+    # t0 = time.time()
+    # preprocess_xml(data_filepath, clean_data_filepath)
+    # print(f"Took {round(time.time() - t0, 2)}s")
+    # #exit()
 
 
     print("Creating index...")
