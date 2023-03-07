@@ -1,5 +1,8 @@
 import os
 import xml.etree.ElementTree as ET
+
+import vbyte
+from ContentIndex import ContentIndex
 from Index import Index
 
 
@@ -7,15 +10,18 @@ def create_index(data_dir, fileout):
     files = os.scandir(data_dir)
 
     # num of docs term appears in
-    term_freq = {}
+    doc_freq = {}
     # docs that a term appears in
     term_doc_appearances = {}
     # positions of appearances of term in each doc
     term_positions = {}
+    # [slidenos] = [1, 1, 1, 2, 4, 5]
+    # term -> {doc -> [slidenos]}
     term_doc_sv = {}
+    # save the total number of slides that a lecture has
+    lecture_total_slides = {}
     # term_doc_videos = {}
     doc_no = 1
-    sv_no = 1
     for f in files:
         if "xml" not in f.name:
             continue
@@ -23,25 +29,18 @@ def create_index(data_dir, fileout):
         print("===============================================")
         print(inp_dir)
         print(doc_no)
-        doc_no, sv_no = create_index_xml(inp_dir, doc_no, term_freq, term_doc_appearances, term_positions, term_doc_sv,
-                                         sv_no)
+        doc_no = create_index_xml(inp_dir, doc_no, doc_freq, term_doc_appearances, term_positions, term_doc_sv, lecture_total_slides)
         # exit()
+    doc_no += -1
+    saveIndexText(fileout, doc_no, doc_freq, term_doc_appearances, term_positions)
+    content_fileout = fileout.split(".", 1)[0] + "Content." + fileout.split(".", 1)[1]
+    print(fileout, content_fileout)
+    saveContentIndexText(content_fileout, term_doc_sv, lecture_total_slides)
 
-    with open(fileout, 'w', encoding='utf-8') as w:
-        w.write(f"num_docs: {doc_no}\n")
-        for k in sorted(term_freq):
-            # print(f"{k}: {term_freq[k]}")
-            w.write(f"{k}: {term_freq[k]}\n")
-            for doc in sorted(term_doc_appearances[k]):
-                line = f"\t{doc}: "
-                # print(f"{doc}: {term_positions[(k, doc)]}")
-                for pos in term_positions[(k, doc)]:
-                    line += f"{pos},"
-                line = f"{line[:-1]}\n"
-                w.write(line)
+    saveIndexVbyte(f"{fileout[:-4]}.bin", doc_no, doc_freq, term_doc_appearances, term_positions)
 
 
-def create_index_xml(filein, doc_no, term_freq, term_doc_appearances, term_positions, term_doc_sv, sv_no):
+def create_index_xml(filein, doc_no, doc_freq, term_doc_appearances, term_positions, term_doc_sv, lecture_total_slides):
     tree = ET.parse(filein)
     root = tree.getroot()
     # print(root.tag)
@@ -58,15 +57,15 @@ def create_index_xml(filein, doc_no, term_freq, term_doc_appearances, term_posit
         elif elem.tag == "course":
             continue
         elif elem.tag == "lectures":
-            max_doc_no, sv_no = indexLecturesElem(elem, doc_no, term_freq, term_doc_appearances, term_positions,
-                                                  term_doc_sv, sv_no)
+            max_doc_no = indexLecturesElem(elem, doc_no, doc_freq, term_doc_appearances, term_positions,
+                                                  term_doc_sv, lecture_total_slides)
         elif elem.tag == "videos":
             continue
 
-    return max_doc_no + 1, sv_no
+    return max_doc_no + 1
 
 
-def indexLecturesElem(root, doc_no, term_freq, term_doc_appearances, term_positions, term_doc_sv, sv_no):
+def indexLecturesElem(root, doc_no, doc_freq, term_doc_appearances, term_positions, term_doc_sv, lecture_total_slides):
     lecture_no = doc_no - 1
     counter = 1
     for lecture_elem in root:
@@ -78,6 +77,7 @@ def indexLecturesElem(root, doc_no, term_freq, term_doc_appearances, term_positi
             if elem.tag == "lecture_title":
                 lecture_title = elem.text
             elif elem.tag == "lectureno":
+                sv_no = 1
                 lecture_no += 1
                 print(lecture_no, "-", lecture_title)
                 # lecture_no = int(elem.text)
@@ -88,7 +88,7 @@ def indexLecturesElem(root, doc_no, term_freq, term_doc_appearances, term_positi
                     slide_no, slide_text = list(subelem)
                     # print(f"Slide {slide_no.text.strip()}")
                     sv_no = index_sv_text(slide_text, lecture_no, term_doc_sv, sv_no)
-                    counter = indexText(slide_text, lecture_no, counter, term_freq, term_doc_appearances,
+                    counter = indexText(slide_text, lecture_no, counter, doc_freq, term_doc_appearances,
                                         term_positions)
 
             elif elem.tag == "videos":
@@ -101,11 +101,13 @@ def indexLecturesElem(root, doc_no, term_freq, term_doc_appearances, term_positi
                     for video_slice in video_transcript:
                         time_slice, slice_text = list(video_slice)
                         sv_no = index_sv_text(slice_text, lecture_no, term_doc_sv, sv_no)
-                        counter = indexText(slice_text, lecture_no, counter, term_freq, term_doc_appearances,
+                        counter = indexText(slice_text, lecture_no, counter, doc_freq, term_doc_appearances,
                                             term_positions)
             else:
                 continue
-    return lecture_no, sv_no
+        lecture_total_slides[lecture_no] = sv_no-1
+        print(f'\t\tnum_slides: {sv_no-1}')
+    return lecture_no
 
 
 def index_sv_text(slide_text, doc_no, dictionary, sv_no):
@@ -145,7 +147,7 @@ def index_sv_text(slide_text, doc_no, dictionary, sv_no):
     return sv_no
 
 
-def indexText(slide_text, doc_no, counter, term_freq, term_doc_appearances, term_positions):
+def indexText(slide_text, doc_no, counter, doc_freq, term_doc_appearances, term_positions):
     # doc_no = lecture_no + int(slide_no.text)
     # if (current_doc_no != doc_no+lecture_no):
     #     print(doc_no+lecture_no, "-", lecture_title)
@@ -163,7 +165,7 @@ def indexText(slide_text, doc_no, counter, term_freq, term_doc_appearances, term
             term_doc_appearances[t] = {doc_no}
 
         # add term to frequency dictionary
-        term_freq[t] = len(term_doc_appearances[t])
+        doc_freq[t] = len(term_doc_appearances[t])
 
         # add term to positions dictionary
         if (t, doc_no) in term_positions:
@@ -175,13 +177,64 @@ def indexText(slide_text, doc_no, counter, term_freq, term_doc_appearances, term
     return counter
 
 
+def saveIndexText(fileout, doc_no, doc_freq, term_doc_appearances, term_positions):
+    if fileout.rsplit(".", 1)[-1] != "txt":
+        fileout = fileout.rsplit(".", 1)[0] + ".txt"
+    with open(f"{fileout}", 'w', encoding='utf-8') as w:
+        w.write(f"num_docs: {doc_no}\n")
+        for t in sorted(doc_freq):
+            # print(f"{k}: {term_freq[k]}")
+            w.write(f"{t}: {doc_freq[t]}\n")
+            for doc in sorted(term_doc_appearances[t]):
+                line = f"\t{doc}: "
+                # print(f"{doc}: {term_positions[(k, doc)]}")
+                for pos in term_positions[(t, doc)]:
+                    line += f"{pos},"
+                line = f"{line[:-1]}\n"
+                w.write(line)
+
+
+def saveContentIndexText(fileout, term_doc_sv, lecture_total_slides):
+    # [slidenos] = [1, 1, 1, 2, 4, 5]
+    # term -> {doc -> [slidenos]}
+    if fileout.rsplit(".", 1)[-1] != "txt":
+        fileout = fileout.rsplit(".", 1)[0] + ".txt"
+    with open(f"{fileout}", 'w', encoding='utf-8') as w:
+        for t in sorted(term_doc_sv):
+            w.write(f"{t}\n")
+            for doc in sorted(term_doc_sv[t]):
+                line = f"\t{doc}: {lecture_total_slides[doc]}: "
+                # print(f"{doc}: {term_positions[(k, doc)]}")
+                for pos in term_doc_sv[t][doc]:
+                    line += f"{pos},"
+                line = f"{line[:-1]}\n"
+                w.write(line)
+
+
+def saveIndexVbyte(fileout, doc_no, doc_freq, term_doc_appearances, term_positions):
+    if fileout.rsplit(".", 1)[-1] != "bin":
+        fileout = fileout.rsplit(".", 1)[0] + ".bin"
+    with open(fileout, 'wb') as w:
+        w.write(vbyte.encode_vbyte([doc_no]))
+        for t in sorted(doc_freq):
+            w.write(vbyte.encode_vbyte([ord(x) for x in t]))
+            w.write(vbyte.encode_vbyte([doc_freq[t]]))
+            w.write(bytes([0]))
+            for doc in sorted(term_doc_appearances[t]):
+                w.write(vbyte.encode_vbyte([doc]))
+                w.write(vbyte.encode_vbyte(term_positions[(t, doc)]))
+            w.write(bytes([0]))
+
+
 def load_index(filein):
     term_freq = {}
     term_doc_appearances = {}
     term_positions = {}
     with open(filein, "r", encoding='utf-8') as f:
-        num_docs = int(f.readline().split(" ")[1].strip())
-        return Index(filein, num_docs)
+        num_docs = None
+        if filein[-4:] == ".txt":
+            num_docs = int(f.readline().split(" ")[1].strip())
+        return Index(filein, num_docs=num_docs)
     """
         for line in f:
             if line[0] != '\t':
@@ -204,3 +257,7 @@ def load_index(filein):
                 # print("footer:", repr(int(terms[0])), repr(positions))
     return Index(filein, num_docs, term_freq, term_doc_appearances, term_positions)
     """
+
+
+def loadContentIndex(filein, lecture_id):
+    return ContentIndex(filein, lecture_id=lecture_id)
