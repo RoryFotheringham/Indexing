@@ -41,61 +41,15 @@ def resolve_queries(query_type, index_filein, queries, results_fileout):
     return
 
 
-def preprocess_boolean_query(index, raw_query):
-    '''
-    takes a raw query string for a boolean query and resolves each phrase.
-    takes this:  'probability AND "Discrete mathematics" OR "baysian statistic"
-    into this => ['probability', 'AND', __set_of_results__, 'OR', __set_of_results__]
-    
-    :param index: Index
-    :param raw_query: str query formatted like s"
-    '''
-    open = False
-    start = 0
-    end = 0
-    curr_phrase = ''
-    curr_query = ''
-    total = []
-    for char in raw_query:
-        
-        if char == '"' and not open:
-            open = True
-            total.append(curr_query)
-            curr_query = ''
-        else:
-            if char == '"' and open:
-                open = False
-                total.append(phrase_search(index, curr_phrase))
-                curr_phrase = ''
-        
-        
-        if open and char != '"':
-            curr_phrase = curr_phrase + char
-        else:
-            if char != '"':
-                curr_query = curr_query + char
-    total.append(curr_query)
-        
-            
-    processed_query = []
-    for chunk in total:
-        if isinstance(chunk,str):
-            temp = chunk.strip().split(' ')
-            for term in temp:
-                if term == '':
-                    continue
-                processed_query.append(term)
-        if isinstance(chunk,set):
-            processed_query.append(chunk)
-            
-    return processed_query
-            
-        
-            
-            
-            
-            
-        
+def resolveContentQuery(index_filein: str, query: str, lecture_id: int):
+    index = indexing.loadContentIndex(index_filein, lecture_id)
+    index.lecture_id = lecture_id
+    result = ranked_query(index, query)
+    with open("yeet.txt", "w", encoding='utf-8') as f:
+        for doc, score in result:
+            f.write(f"{doc},{round(score, 4)}\n")
+    return result
+
 
 def ranked_query(index: Index, query: str):
     """
@@ -138,14 +92,62 @@ def calculate_score(index: Index, terms: [str], doc: int):
         if doc not in index.getTermDocAppearances(term):
             continue
         # calculate term frequency
-        tf = len(index.getTermPositions((term, doc)))
+        tf = index.getTermFreq(term, doc)
         # calculate document frequency and inverse document frequency
-        df = index.getTermFreq(term)
+        df = index.getDocFreq(term)
         idf = math.log10(N / df)
         # finally, calculate the score and add it to the running total
         wtd = (1 + math.log10(tf)) * idf
         score += wtd
     return score
+
+
+def preprocess_boolean_query(index, raw_query):
+    '''
+    takes a raw query string for a boolean query and resolves each phrase.
+    takes this:  'probability AND "Discrete mathematics" OR "baysian statistic"
+    into this => ['probability', 'AND', __set_of_results__, 'OR', __set_of_results__]
+
+    :param index: Index
+    :param raw_query: str query formatted like s"
+    '''
+    open = False
+    start = 0
+    end = 0
+    curr_phrase = ''
+    curr_query = ''
+    total = []
+    for char in raw_query:
+
+        if char == '"' and not open:
+            open = True
+            total.append(curr_query)
+            curr_query = ''
+        else:
+            if char == '"' and open:
+                open = False
+                total.append(phrase_search(index, curr_phrase))
+                curr_phrase = ''
+
+        if open and char != '"':
+            curr_phrase = curr_phrase + char
+        else:
+            if char != '"':
+                curr_query = curr_query + char
+    total.append(curr_query)
+
+    processed_query = []
+    for chunk in total:
+        if isinstance(chunk, str):
+            temp = chunk.strip().split(' ')
+            for term in temp:
+                if term == '':
+                    continue
+                processed_query.append(term)
+        if isinstance(chunk, set):
+            processed_query.append(chunk)
+
+    return processed_query
 
 
 def resolve_term(index: Index, term: str, not_flag=False):
@@ -167,8 +169,8 @@ def resolve_term(index: Index, term: str, not_flag=False):
     return index.getTermDocAppearances(term)
 
 
-def resolve_phrase(index: Index, term: str, not_flag=False):    #currently only works for
-                                                                #exactly 2 terms.  
+def resolve_phrase(index: Index, term: str, not_flag=False):  # currently only works for
+    # exactly 2 terms.
     """
     Returns the set of documents that a phrase is in
     :param index: Index object
@@ -188,8 +190,8 @@ def resolve_phrase(index: Index, term: str, not_flag=False):    #currently only 
     # for every document, check if the terms appear in the appropriate positions
     out = set()
     for doc in intersect:
-        for pos_left in index.getTermPositions((left, doc)):
-            if pos_left + 1 in index.getTermPositions((right, doc)):
+        for pos_left in index.getTermPositions(left, doc):
+            if pos_left + 1 in index.getTermPositions(right, doc):
                 out.add(doc)
                 break
 
@@ -224,9 +226,9 @@ def resolve_proximity(index, term):
     # for every document, check if the terms appear in the appropriate positions
     out = set()
     for doc in intersect:
-        for pos_left in index.getTermPositions((left, doc)):
+        for pos_left in index.getTermPositions(left, doc):
             brk = False
-            for pos_right in index.getTermPositions((right, doc)):
+            for pos_right in index.getTermPositions(right, doc):
                 if abs(pos_left - pos_right) <= range:
                     out.add(doc)
                     brk = True
@@ -234,6 +236,7 @@ def resolve_proximity(index, term):
             if brk:
                 break
     return out
+
 
 def phrase_search(index: Index, query):
     '''
@@ -246,71 +249,72 @@ def phrase_search(index: Index, query):
     terms = query.split(' ')
     if terms == []:
         return set()
-    
+
     seed = terms[0]
-    
+
     appearances = index.getTermDocAppearances(seed)
     if not appearances:
         return set()
     tups = []
     for app in appearances:
-        positions = index.getTermPositions((seed, app))
+        positions = index.getTermPositions(seed, app)
         for pos in positions:
             tups.append((app, pos))
-    
+
     results = []
     for tup in tups:
-        result = phrase_search_recur(index, tup, terms[1:]) 
+        result = phrase_search_recur(index, tup, terms[1:])
         if result != (-1, -1):
             results.append(result)
     return set(results)
-    
-    
+
+
 def phrase_search_recur(index: Index, tup, rest_of_phrase: [str]):
     if rest_of_phrase == []:
-        return tup[0] 
-    
+        return tup[0]
+
     seed = rest_of_phrase[0]
     terms = rest_of_phrase[1:]
     prev_doc = tup[0]
     prev_pos = tup[1]
-    
+
     appearences = index.getTermDocAppearances(seed)
     if not appearences:
         return (-1, -1)
     else:
         for app in appearences:
             if app == prev_doc:
-                positions = index.getTermPositions((seed, app))
+                positions = index.getTermPositions(seed, app)
                 for pos in positions:
-                    if pos == prev_pos+1:
+                    if pos == prev_pos + 1:
                         return phrase_search_recur(index, (app, pos), terms)
         return (-1, -1)
-            
-    
+
 
 def and_wrap(index: Index, term_1, term_2):
     if isinstance(term_1, str):
         term_1 = resolve_term(index, term_1)
-        
+
     if isinstance(term_2, str):
         term_2 = resolve_term(index, term_2)
-        
+
     return term_1.intersection(term_2)
+
 
 def or_wrap(index: Index, term_1, term_2):
     if isinstance(term_1, str):
         term_1 = resolve_term(index, term_1)
-        
+
     if isinstance(term_2, str):
         term_2 = resolve_term(index, term_2)
-        
+
     return term_1.union(term_2)
+
 
 def not_wrap(index: Index, term):
     if isinstance(term, str):
         term = resolve_term(index, term)
-        
+
     return index.all_docs.difference(term)
 
 
@@ -322,24 +326,20 @@ def bool_helper(index: Index, query):
     :param query: untokenised raw string query
     :param index: Index
     '''
-    
-    opp_dict = {1 : ('NOT', not_wrap, 1),
-            2 : ('AND', and_wrap, 2),
-            3 : ('OR', or_wrap, 2)}
+
+    opp_dict = {1: ('NOT', not_wrap, 1),
+                2: ('AND', and_wrap, 2),
+                3: ('OR', or_wrap, 2)}
     opp_index = 1
-    
+
     terms = preprocess_boolean_query(index, query)
-    
-    
-    
+
     if len(terms) == 1:
-        if isinstance(terms, str): 
+        if isinstance(terms, str):
             return index.getTermDocAppearances(terms[0])
         elif isinstance(terms, set):
             return terms[0]
-    
-    
-    
+
     def make_new_terms(terms, count, function, arity):
         '''
         constructs a new list which on which bool search is
@@ -353,29 +353,30 @@ def bool_helper(index: Index, query):
         '''
         new_terms = []
         if arity == 1:
-            application = function(index, terms[count+1])
+            application = function(index, terms[count + 1])
             for i in range(len(terms)):
-                if i == count+1:
+                if i == count + 1:
                     continue
                 elif i == count:
                     new_terms.append(application)
                 else:
                     new_terms.append(terms[i])
-            
+
         if arity == 2:
-            application = function(index, terms[count-1], terms[count+1])
+            application = function(index, terms[count - 1], terms[count + 1])
             for i in range(len(terms)):
-                if i == count-1 or i == count+1:
+                if i == count - 1 or i == count + 1:
                     continue
                 elif i == count:
                     new_terms.append(application)
                 else:
                     new_terms.append(terms[i])
-        
+
         return new_terms
-    #todo confirm the type of the query and implement the 
+
+    # todo confirm the type of the query and implement the
     # necessary preprocessing before passing to bool_search
-    
+
     def bool_search(terms, opp_index):
         '''
         recursively called on a list of terms which are repeatedly simplified through operator applications
@@ -385,7 +386,7 @@ def bool_helper(index: Index, query):
         '''
         if len(terms) == 1:
             return terms[0]
-        
+
         while opp_index <= max(opp_dict.keys()):
             opp, opp_func, opp_arity = opp_dict.get(opp_index)
             for count, term in enumerate(terms):
@@ -397,13 +398,9 @@ def bool_helper(index: Index, query):
                         return {}
                     return bool_search(new_terms, opp_index)
             opp_index += 1
-        
+
     return bool_search(terms, opp_index)
-                
-                
-            
-        
-        
+
 
 def boolean_query(index: Index, query: str):
     terms = query
