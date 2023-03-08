@@ -10,6 +10,7 @@ class Index:
         :param term_positions: positions of appearances of term in each doc
         """
         self.index_filename = index_filename
+        self.index_squared_filename = index_filename.split(".", 1)[0] + ".indexSquared.txt"
         self.LRU = deque(maxlen=max_cache_size)
         # save given parameters as class attributes
         self.doc_freq = doc_freq
@@ -21,7 +22,8 @@ class Index:
         #self.term_doc_appearances = {}
         #self.term_positions = {}
         if num_docs is None:
-            self.readNumDocsBin()
+            # self.readNumDocsBin()
+            self.total_num_docs = 13630
         else:
             # save the total number of documents in index
             self.total_num_docs = num_docs
@@ -84,6 +86,81 @@ class Index:
             return self.loadTermBin(term)
 
     def loadTermBin(self, term):
+        t0 = time.time()
+        found_term = False
+        offset = 0
+        with open(self.index_squared_filename, 'r') as f:
+            for line in f:
+                current_term, current_offset = line.split(":")
+                if current_term == term:
+                    found_term = True
+                    offset = int(current_offset)
+                    break
+        if not found_term:
+            return False
+
+        chunk_size = 1024
+        with open(self.index_filename, 'rb') as f:
+            result = []
+            buffer = 0
+            shift = 0
+            f.seek(offset)
+            hard_delimit = False
+            stage = 0
+            doc = -1
+            doc_def = True
+            while True:
+                chunk = f.read(chunk_size)
+                if not chunk:
+                    break
+                for byte in chunk:
+                    # delimiter byte
+                    if byte == 0x00:
+                        # if this is a hard delimit, we have read all data for the term, thus return
+                        if hard_delimit:
+                            print(f"Loading {term} took {round(time.time() - t0, 2)}s")
+                            return True
+
+                        # if this line is a term definition, then parse it as so
+                        if stage == 0:
+                            stage += 1
+                        elif stage == 1:
+                            # print(result)
+                            self.doc_freq[term] = result[0]
+                            stage += 1
+                        else:
+                            # if the line isn't term def, then it is term frequency with term positions
+                            # thus parse it
+                            if doc_def:
+                                doc_def = False
+                                doc = result[0]
+                            else:
+                                doc_def = True
+                                if term in self.term_doc_appearances:
+                                    self.term_doc_appearances[term].add(doc)
+                                else:
+                                    self.term_doc_appearances[term] = {doc}
+                                self.term_positions[(term, doc)] = result
+                                # print(f"{doc}: {result}")
+                        result = []
+                        buffer = 0
+                        shift = 0
+
+                        hard_delimit = True
+                        #print(f"Delim took {round(time.time() - t_delim, 2)}s")
+                    else:
+                        hard_delimit = False
+                        if byte < 128:  # MSB is 0
+                            buffer |= byte << shift
+                            result.append(buffer)
+                            buffer = 0
+                            shift = 0
+                        else:  # MSB is 1
+                            buffer |= (byte & 0x7f) << shift
+                            shift += 7
+        return found_term
+
+    def loadTermBinSlow(self, term):
         t0 = time.time()
         chunk_size = 1024
         with open(self.index_filename, 'rb') as f:
@@ -179,6 +256,7 @@ class Index:
         return found_term
 
     def loadTermText(self, term):
+        t0 = time.time()
         with open(self.index_filename, "r", encoding='utf-8') as f:
             f.readline()
 
@@ -186,6 +264,7 @@ class Index:
             for line in f:
                 if line[0] != '\t':
                     if found_term:
+                        print(f"Loading {term} took {round(time.time() - t0, 2)}s")
                         return True
                     if line.split(": ")[0] != term:
                         continue

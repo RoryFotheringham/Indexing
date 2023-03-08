@@ -217,15 +217,24 @@ def saveContentIndexText(fileout, term_doc_sv, lecture_total_slides):
 def saveIndexVbyte(fileout, doc_no, doc_freq, term_doc_appearances, term_positions):
     if fileout.rsplit(".", 1)[-1] != "bin":
         fileout = fileout.rsplit(".", 1)[0] + ".bin"
-    with open(fileout, 'wb') as w:
-        w.write(vbyte.encode_vbyte([doc_no]))
+    index_squared = fileout.split(".", 1)[0] + ".indexSquared.txt"
+    with open(fileout, 'wb') as w, open(index_squared, 'w') as w_squared:
+        arr = vbyte.encode_vbyte([doc_no])
+        w.write(arr)
         for t in sorted(doc_freq):
-            w.write(vbyte.encode_vbyte([ord(x) for x in t]))
-            w.write(vbyte.encode_vbyte([doc_freq[t]]))
-            w.write(bytes([0]))
+            w_squared.write(f"{t}:{w.tell()}\n")
+            arr = vbyte.encode_vbyte([ord(x) for x in t])
+            w.write(arr)
+            print(f"{t}:{w.tell()}")
+
+            arr = vbyte.encode_vbyte([doc_freq[t]])
+            w.write(arr)
+
             for doc in sorted(term_doc_appearances[t]):
-                w.write(vbyte.encode_vbyte([doc]))
-                w.write(vbyte.encode_vbyte(term_positions[(t, doc)]))
+                arr = vbyte.encode_vbyte([doc])
+                w.write(arr)
+                arr = vbyte.encode_vbyte(term_positions[(t, doc)])
+                w.write(arr)
             w.write(bytes([0]))
 
 
