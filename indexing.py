@@ -225,7 +225,7 @@ def saveIndexVbyte(fileout, doc_no, doc_freq, term_doc_appearances, term_positio
             w_squared.write(f"{t}:{w.tell()}\n")
             arr = vbyte.encode_vbyte([ord(x) for x in t])
             w.write(arr)
-            print(f"{t}:{w.tell()}")
+            #print(f"{t}:{w.tell()}")
 
             arr = vbyte.encode_vbyte([doc_freq[t]])
             w.write(arr)
