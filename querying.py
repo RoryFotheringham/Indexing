@@ -10,7 +10,7 @@ import indexing
 import preprocessing
 
 
-def resolve_queries(query_type, index_filein, queries, results_fileout):
+def resolve_queries(query_type, index_filein, queries, results_fileout, expanded_query: str=""):
     """
     Loads index and given query file, processes ranked queries and saves output to a given file location
     :param query_type: either 'boolean' or 'ranked'
@@ -34,10 +34,41 @@ def resolve_queries(query_type, index_filein, queries, results_fileout):
                     f.write(f"{doc}\n")
                     # print(f"{query_num},{doc}")
             elif query_type.lower() == "ranked":
-                result = ranked_query(index, q.strip())
+                result = ranked_query(index, q.strip(), expanded_query=expanded_query)
                 for doc, score in result:
                     f.write(f"{doc},{round(score, 4)}\n")
                     # print(f"{query_num},{doc},{round(score, 4)}")
+    return
+
+
+def resolve_query(query_type: str, index_filein: str, query: str, results_fileout: str, expanded_query: str=""):
+    """
+    Loads index and given query file, processes ranked queries and saves output to a given file location
+    :param expanded_query:
+    :param query_type: either 'boolean' or 'ranked'
+    :param index_filein: text file to load index from
+    :param query: list of queries
+    :param results_fileout: text file to save results to
+    :return: None
+    """
+    # load the index from the given filepath
+    # index is the custom 'Index' object as defined above
+    t0 = time.time()
+    index = indexing.load_index(index_filein)
+    print(f"Loading index took {round(time.time() - t0, 2)}s")
+
+    # resolve each individual query using the loaded index and save results to output file
+    with open(results_fileout, "w", encoding='utf-8') as f:
+        if query_type.lower() == "boolean":
+            result = bool_helper(index, query.strip())
+            for doc in result:
+                f.write(f"{doc}\n")
+                # print(f"{query_num},{doc}")
+        elif query_type.lower() == "ranked":
+            result = ranked_query(index, query.strip(), expanded_query=expanded_query)
+            for doc, score in result:
+                f.write(f"{doc},{round(score, 4)}\n")
+                # print(f"{query_num},{doc},{round(score, 4)}")
     return
 
 
@@ -51,15 +82,17 @@ def resolveContentQuery(index_filein: str, query: str, lecture_id: int):
     return result
 
 
-def ranked_query(index: Index, query: str):
+def ranked_query(index: Index, query: str, expanded_query=""):
     """
     Resolves ranked query using the given index
+    :param expanded_query:
     :param index: Index object
     :param query: ranked query to process
     :return: returns a sorted list of tuples (document, score)
     """
     # apply pre-processing to the query
     terms = preprocessing.clean_line(query).split(" ")
+    expanded_terms = preprocessing.clean_line(expanded_query).split(" ")
     # get the set of all documents to calculate score for
     docs_union = set()
     for term in terms:
@@ -69,7 +102,7 @@ def ranked_query(index: Index, query: str):
     # calculate the score for each document
     scores = {}
     for doc in docs_union:
-        scores[doc] = calculate_score(index, terms, doc)
+        scores[doc] = calculate_score(index, terms, doc, expanded_terms=expanded_terms)
 
     # sort results and keep only first 150 indices
     out = sorted(scores.items(), key=lambda x: x[1], reverse=True)
@@ -77,9 +110,10 @@ def ranked_query(index: Index, query: str):
     return out
 
 
-def calculate_score(index: Index, terms: [str], doc: int):
+def calculate_score(index: Index, terms: [str], doc: int, expanded_terms: [str]=[]):
     """
     Calculate the score of a document given a list of terms
+    :param expanded_terms:
     :param index: Index object
     :param terms: list of terms to search for
     :param doc: document number to score
@@ -87,7 +121,9 @@ def calculate_score(index: Index, terms: [str], doc: int):
     """
     N = index.total_num_docs
     score = 0
-    for term in terms:
+    all_terms = terms + expanded_terms
+    for i in range(len(all_terms)):
+        term = all_terms[i]
         # if this term does not appear in the given document then skip it
         if doc not in index.getTermDocAppearances(term):
             continue
@@ -98,6 +134,8 @@ def calculate_score(index: Index, terms: [str], doc: int):
         idf = math.log10(N / df)
         # finally, calculate the score and add it to the running total
         wtd = (1 + math.log10(tf)) * idf
+        if i >= len(terms):
+            wtd *= 0.5
         score += wtd
     return score
 
