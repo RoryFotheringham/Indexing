@@ -84,10 +84,12 @@ def indexLecturesElem(root, doc_no, doc_freq, term_doc_appearances, term_positio
             elif elem.tag == "slides":
 
                 for subelem in elem:
-                    print(f'\t\tslide_video_number: {sv_no}')
-                    slide_no, slide_text = list(subelem)
-                    # print(f"Slide {slide_no.text.strip()}")
-                    sv_no = index_sv_text(slide_text, lecture_no, term_doc_sv, sv_no)
+
+                    slide_no_str, slide_text = list(subelem)
+                    slide_no = int(slide_no_str.text) + 1
+                    sv_no = max(sv_no, slide_no)
+                    print(f'\t\tslide_video_number: {slide_no}/{sv_no}')
+                    index_sv_text(slide_text, lecture_no, term_doc_sv, slide_no)
                     counter = indexText(slide_text, lecture_no, counter, doc_freq, term_doc_appearances,
                                         term_positions)
 
@@ -100,13 +102,15 @@ def indexLecturesElem(root, doc_no, doc_freq, term_doc_appearances, term_positio
                     # print(f"Video - {video_title.text}")
                     for video_slice in video_transcript:
                         time_slice, slice_text = list(video_slice)
-                        sv_no = index_sv_text(slice_text, lecture_no, term_doc_sv, sv_no)
+                        sv_no += 1
+                        index_sv_text(slice_text, lecture_no, term_doc_sv, sv_no)
+
                         counter = indexText(slice_text, lecture_no, counter, doc_freq, term_doc_appearances,
                                             term_positions)
             else:
                 continue
-        lecture_total_slides[lecture_no] = sv_no-1
-        print(f'\t\tnum_slides: {sv_no-1}')
+        lecture_total_slides[lecture_no] = sv_no
+        print(f'\t\tnum_slides: {sv_no}')
     return lecture_no
 
 
@@ -143,7 +147,6 @@ def index_sv_text(slide_text, doc_no, dictionary, sv_no):
         else:
             dictionary[t] = {doc_no: [sv_no]}
 
-    sv_no += 1
     return sv_no
 
 
