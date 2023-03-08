@@ -92,7 +92,10 @@ def ranked_query(index: Index, query: str, expanded_query=""):
     """
     # apply pre-processing to the query
     terms = preprocessing.clean_line(query).split(" ")
-    expanded_terms = preprocessing.clean_line(expanded_query).split(" ")
+    expanded_terms = []
+    if expanded_query != "":
+        expanded_terms = preprocessing.clean_line(expanded_query).split(" ")
+
     # get the set of all documents to calculate score for
     docs_union = set()
     for term in terms:
@@ -102,7 +105,7 @@ def ranked_query(index: Index, query: str, expanded_query=""):
     # calculate the score for each document
     scores = {}
     for doc in docs_union:
-        scores[doc] = calculate_score(index, terms, doc, expanded_terms=expanded_terms)
+        scores[doc] = calculate_query_score(index, terms, doc, expanded_terms=expanded_terms)
 
     # sort results and keep only first 150 indices
     out = sorted(scores.items(), key=lambda x: x[1], reverse=True)
@@ -110,7 +113,7 @@ def ranked_query(index: Index, query: str, expanded_query=""):
     return out
 
 
-def calculate_score(index: Index, terms: [str], doc: int, expanded_terms: [str]=[]):
+def calculate_query_score(index: Index, terms: [str], doc: int, expanded_terms: [str]=[]):
     """
     Calculate the score of a document given a list of terms
     :param expanded_terms:
@@ -119,25 +122,26 @@ def calculate_score(index: Index, terms: [str], doc: int, expanded_terms: [str]=
     :param doc: document number to score
     :return: returns a score
     """
-    N = index.total_num_docs
     score = 0
-    all_terms = terms + expanded_terms
-    for i in range(len(all_terms)):
-        term = all_terms[i]
-        # if this term does not appear in the given document then skip it
-        if doc not in index.getTermDocAppearances(term):
-            continue
-        # calculate term frequency
-        tf = index.getTermFreq(term, doc)
-        # calculate document frequency and inverse document frequency
-        df = index.getDocFreq(term)
-        idf = math.log10(N / df)
-        # finally, calculate the score and add it to the running total
-        wtd = (1 + math.log10(tf)) * idf
-        if i >= len(terms):
-            wtd *= 0.5
-        score += wtd
+    for term in terms:
+        score += calculate_term_score(index, term, doc)
+    for term in expanded_terms:
+        score += calculate_term_score(index, term, doc) * 0.25
     return score
+
+
+def calculate_term_score(index: Index, term: str, doc: int):
+    # if this term does not appear in the given document then skip it
+    if doc not in index.getTermDocAppearances(term):
+        return 0
+    # calculate term frequency
+    tf = index.getTermFreq(term, doc)
+    # calculate document frequency and inverse document frequency
+    df = index.getDocFreq(term)
+    idf = math.log10(index.total_num_docs / df)
+    # finally, calculate the score and add it to the running total
+    wtd = (1 + math.log10(tf)) * idf
+    return wtd
 
 
 def preprocess_boolean_query(index, raw_query):
