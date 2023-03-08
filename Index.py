@@ -22,8 +22,8 @@ class Index:
         #self.term_doc_appearances = {}
         #self.term_positions = {}
         if num_docs is None:
-            # self.readNumDocsBin()
-            self.total_num_docs = 13630
+            self.readNumDocsBin()
+            #self.total_num_docs = 13630
         else:
             # save the total number of documents in index
             self.total_num_docs = num_docs
@@ -293,7 +293,6 @@ class Index:
     def readNumDocsBin(self):
         chunk_size = 1024
         with open(self.index_filename, 'rb') as f:
-            found_term = False
             result = []
             buffer = 0
             shift = 0
@@ -306,8 +305,8 @@ class Index:
                     # delimiter byte
                     if byte == 0x00:
                         self.total_num_docs = result[0]
+                        return
                     else:
-                        hard_delimit = False
                         if byte < 128:  # MSB is 0
                             buffer |= byte << shift
                             result.append(buffer)
