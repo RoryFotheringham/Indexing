@@ -113,7 +113,7 @@ def ranked_query(index: Index, query: str, expanded_query=""):
     return out
 
 
-def calculate_query_score(index: Index, terms: [str], doc: int, expanded_terms: [str]=[]):
+def calculate_query_score(index: Index, terms: [str], doc: int, expanded_terms=None):
     """
     Calculate the score of a document given a list of terms
     :param expanded_terms:
@@ -122,6 +122,8 @@ def calculate_query_score(index: Index, terms: [str], doc: int, expanded_terms: 
     :param doc: document number to score
     :return: returns a score
     """
+    if expanded_terms is None:
+        expanded_terms = []
     score = 0
     for term in terms:
         score += calculate_term_score(index, term, doc)
