@@ -15,6 +15,7 @@ class Index:
         # save given parameters as class attributes
         self.doc_freq = doc_freq
         self.term_doc_appearances = term_doc_appearances
+        self.term_freq = {}
         self.term_positions = term_positions
         # get the set of all documents in the index
         self.all_docs = set().union(*self.term_doc_appearances.values())
@@ -51,14 +52,24 @@ class Index:
             return set()
 
     def getTermFreq(self, term: str, doc: int):
-        return len(self.getTermPositions(term, doc))
+        term_doc_tuple = (term, doc)
+        if term not in self.doc_freq:
+            if len(self.LRU) >= self.LRU.maxlen:
+                self.removeFromCache(1)
+            self.loadToCache(term)
+
+        if term_doc_tuple in self.term_positions:
+            return self.term_freq[term_doc_tuple]
+        else:
+            return 0
+        #return len(self.getTermPositions(term, doc))
 
     def getTermPositions(self, term: str, doc: int):
         term_doc_tuple = (term, doc)
-        if term_doc_tuple not in self.term_positions:
+        if term not in self.doc_freq:
             if len(self.LRU) >= self.LRU.maxlen:
                 self.removeFromCache(1)
-            self.loadToCache(term_doc_tuple)
+            self.loadToCache(term)
 
         if term_doc_tuple in self.term_positions:
             return self.term_positions[term_doc_tuple]
@@ -141,6 +152,7 @@ class Index:
                                 else:
                                     self.term_doc_appearances[term] = {doc}
                                 self.term_positions[(term, doc)] = result
+                                self.term_freq[(term, doc)] = len(result)
                                 # print(f"{doc}: {result}")
                         result = []
                         buffer = 0
