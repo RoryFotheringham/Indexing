@@ -223,9 +223,9 @@ def saveIndexVbyte(fileout, doc_no, doc_freq, term_doc_appearances, term_positio
         w.write(vbyte.encode_vbyte([doc_no]))
         prev = 0
         for t in sorted(doc_freq):
-            #w_squared.write(f"{t}:{w.tell() - prev}\n")
+            w_squared.write(f"{t}:{w.tell() - prev}\n")
             prev = w.tell()
-            w_squared.write(f"{t}:{w.tell()}\n")
+            #w_squared.write(f"{t}:{w.tell()}\n")
             w.write(vbyte.encode_vbyte([ord(x) for x in t]))
             #print(f"{t}:{w.tell()}")
             w.write(vbyte.encode_vbyte([doc_freq[t]]))
@@ -243,8 +243,11 @@ def saveContentIndexVbyte(fileout, term_doc_sv, lecture_total_slides):
         fileout = fileout.rsplit(".", 1)[0] + ".bin"
     index_squared = fileout.split(".", 1)[0] + ".indexSquared.txt"
     with open(f"{fileout}", 'wb') as w, open(index_squared, 'w') as w_squared:
+        prev = 0
         for t in sorted(term_doc_sv):
-            w_squared.write(f"{t}:{w.tell()}\n")
+            w_squared.write(f"{t}:{w.tell() - prev}\n")
+            prev = w.tell()
+            #w_squared.write(f"{t}:{w.tell()}\n")
             w.write(vbyte.encode_vbyte([ord(x) for x in t]))
             for doc in sorted(term_doc_sv[t]):
                 w.write(vbyte.encode_vbyte([doc, lecture_total_slides[doc]]))

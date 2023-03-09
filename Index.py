@@ -101,11 +101,14 @@ class Index:
         found_term = False
         offset = 0
         with open(self.index_squared_filename, 'r') as f:
+            aggregate = 0
             for line in f:
                 current_term, current_offset = line.split(":")
+                aggregate += int(current_offset)
                 if current_term == term:
                     found_term = True
-                    offset = int(current_offset)
+                    # offset = int(current_offset)
+                    offset = aggregate
                     break
         if not found_term:
             return False
