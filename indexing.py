@@ -38,6 +38,7 @@ def create_index(data_dir, fileout):
     saveContentIndexText(content_fileout, term_doc_sv, lecture_total_slides)
 
     saveIndexVbyte(f"{fileout[:-4]}.bin", doc_no, doc_freq, term_doc_appearances, term_positions)
+    saveContentIndexVbyte(content_fileout, term_doc_sv, lecture_total_slides)
 
 
 def create_index_xml(filein, doc_no, doc_freq, term_doc_appearances, term_positions, term_doc_sv, lecture_total_slides):
@@ -219,22 +220,35 @@ def saveIndexVbyte(fileout, doc_no, doc_freq, term_doc_appearances, term_positio
         fileout = fileout.rsplit(".", 1)[0] + ".bin"
     index_squared = fileout.split(".", 1)[0] + ".indexSquared.txt"
     with open(fileout, 'wb') as w, open(index_squared, 'w') as w_squared:
-        arr = vbyte.encode_vbyte([doc_no])
-        w.write(arr)
+        w.write(vbyte.encode_vbyte([doc_no]))
+        prev = 0
         for t in sorted(doc_freq):
+            #w_squared.write(f"{t}:{w.tell() - prev}\n")
+            prev = w.tell()
             w_squared.write(f"{t}:{w.tell()}\n")
-            arr = vbyte.encode_vbyte([ord(x) for x in t])
-            w.write(arr)
+            w.write(vbyte.encode_vbyte([ord(x) for x in t]))
             #print(f"{t}:{w.tell()}")
-
-            arr = vbyte.encode_vbyte([doc_freq[t]])
-            w.write(arr)
+            w.write(vbyte.encode_vbyte([doc_freq[t]]))
 
             for doc in sorted(term_doc_appearances[t]):
-                arr = vbyte.encode_vbyte([doc])
-                w.write(arr)
-                arr = vbyte.encode_vbyte(term_positions[(t, doc)])
-                w.write(arr)
+                w.write(vbyte.encode_vbyte([doc]))
+                w.write(vbyte.encode_vbyte(term_positions[(t, doc)]))
+            w.write(bytes([0]))
+
+
+def saveContentIndexVbyte(fileout, term_doc_sv, lecture_total_slides):
+    # [slidenos] = [1, 1, 1, 2, 4, 5]
+    # term -> {doc -> [slidenos]}
+    if fileout.rsplit(".", 1)[-1] != "bin":
+        fileout = fileout.rsplit(".", 1)[0] + ".bin"
+    index_squared = fileout.split(".", 1)[0] + ".indexSquared.txt"
+    with open(f"{fileout}", 'wb') as w, open(index_squared, 'w') as w_squared:
+        for t in sorted(term_doc_sv):
+            w_squared.write(f"{t}:{w.tell()}\n")
+            w.write(vbyte.encode_vbyte([ord(x) for x in t]))
+            for doc in sorted(term_doc_sv[t]):
+                w.write(vbyte.encode_vbyte([doc, lecture_total_slides[doc]]))
+                w.write(vbyte.encode_vbyte(term_doc_sv[t][doc]))
             w.write(bytes([0]))
 
 

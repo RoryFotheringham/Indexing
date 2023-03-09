@@ -1,3 +1,4 @@
+import time
 from collections import deque
 
 from Index import Index
@@ -9,6 +10,7 @@ class ContentIndex(Index):
         # [slidenos] = [1, 1, 1, 2, 4, 5]
         # term -> {doc -> [slidenos]}
         self.index_filename = index_filename
+        self.index_squared_filename = index_filename.split(".", 1)[0] + ".indexSquared.txt"
         self.LRU = deque(maxlen=max_cache_size)
         self.term_doc_sv = {}
         self.lecture_id = -1
@@ -66,6 +68,76 @@ class ContentIndex(Index):
         elif self.index_filename.rsplit(".", 1)[-1] == "bin":
             return self.loadTermBin(term)
 
+    def loadTermBin(self, term):
+        t0 = time.time()
+        found_term = False
+        offset = 0
+        with open(self.index_squared_filename, 'r') as f:
+            for line in f:
+                current_term, current_offset = line.split(":")
+                if current_term == term:
+                    found_term = True
+                    offset = int(current_offset)
+                    break
+        if not found_term:
+            return False
+
+        self.term_doc_sv[term] = {}
+        chunk_size = 1024
+        with open(self.index_filename, 'rb') as f:
+            result = []
+            buffer = 0
+            shift = 0
+            f.seek(offset)
+            hard_delimit = False
+            stage = 0
+            doc = -1
+            doc_def = True
+            while True:
+                chunk = f.read(chunk_size)
+                if not chunk:
+                    break
+                for byte in chunk:
+                    # delimiter byte
+                    if byte == 0x00:
+                        # if this is a hard delimit, we have read all data for the term, thus return
+                        if hard_delimit:
+                            print(f"Loading {term} took {round(time.time() - t0, 2)}s")
+                            return True
+
+                        # if this line is a term definition, then parse it as so
+                        if stage == 0:
+                            stage += 1
+                        else:
+                            # if the line isn't term def, then it is term frequency with term positions
+                            # thus parse it
+                            if doc_def:
+                                doc_def = False
+                                doc = result[0]
+                                doc_num_slides = result[1]
+                                self.total_num_docs = doc_num_slides
+                            else:
+                                doc_def = True
+                                self.term_doc_sv[term][doc] = result
+                                # print(f"{doc}: {result}")
+                        result = []
+                        buffer = 0
+                        shift = 0
+
+                        hard_delimit = True
+                        # print(f"Delim took {round(time.time() - t_delim, 2)}s")
+                    else:
+                        hard_delimit = False
+                        if byte < 128:  # MSB is 0
+                            buffer |= byte << shift
+                            result.append(buffer)
+                            buffer = 0
+                            shift = 0
+                        else:  # MSB is 1
+                            buffer |= (byte & 0x7f) << shift
+                            shift += 7
+        return found_term
+
     def loadTermText(self, term):
         with open(self.index_filename, "r", encoding='utf-8') as f:
             found_term = False
@@ -86,6 +158,3 @@ class ContentIndex(Index):
                     slides = [int(s) for s in slides_str.split(',')]
                     self.term_doc_sv[term][int(doc_str)] = slides
         return found_term
-
-    def loadTermBin(self, term):
-        return True
