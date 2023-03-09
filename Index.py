@@ -58,7 +58,7 @@ class Index:
                 self.removeFromCache(1)
             self.loadToCache(term)
 
-        if term_doc_tuple in self.term_positions:
+        if term_doc_tuple in self.term_freq:
             return self.term_freq[term_doc_tuple]
         else:
             return 0
@@ -86,9 +86,11 @@ class Index:
         remove_no = min(remove_no, len(self.LRU))
         for i in range(remove_no):
             oldest_term = self.LRU.popleft()
+            for doc in self.term_doc_appearances[oldest_term]:
+                del self.term_positions[(oldest_term, doc)]
+                del self.term_freq[(oldest_term, doc)]
             del self.doc_freq[oldest_term]
             del self.term_doc_appearances[oldest_term]
-            del self.term_positions[oldest_term]
 
     def loadTerm(self, term):
         if self.index_filename.rsplit(".", 1)[-1] == "txt":
