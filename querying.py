@@ -100,14 +100,24 @@ def ranked_query(index: Index, query: str, expanded_query=""):
 
     # get the set of all documents to calculate score for
     docs_union = set()
+    terms_in_index = []
     for term in terms:
         docs = index.getTermDocAppearances(term)
-        docs_union = docs_union.union(docs)
+        if len(docs) != 0:
+            terms_in_index.append(term)
+            docs_union = docs_union.union(docs)
 
+    expanded_terms_in_index = []
+    for term in expanded_terms:
+        docs = index.getTermDocAppearances(term)
+        print(docs)
+        if len(docs) != 0:
+            expanded_terms_in_index.append(term)
+            docs_union = docs_union.union(docs)
     # calculate the score for each document
     scores = {}
     for doc in docs_union:
-        scores[doc] = calculate_query_score(index, terms, doc, expanded_terms=expanded_terms)
+        scores[doc] = calculate_query_score(index, terms_in_index, doc, expanded_terms=expanded_terms_in_index)
 
     # sort results and keep only first 150 indices
     out = sorted(scores.items(), key=lambda x: x[1], reverse=True)
