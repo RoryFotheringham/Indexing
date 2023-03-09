@@ -10,53 +10,16 @@ import indexing
 import preprocessing
 
 
-def resolve_queries(query_type, index_filein, queries, results_fileout, expanded_query: str=""):
+def resolve_query(query_type: str, index: Index, query: str, results_fileout: str, expanded_query: str=""):
     """
     Loads index and given query file, processes ranked queries and saves output to a given file location
-    :param query_type: either 'boolean' or 'ranked'
-    :param index_filein: text file to load index from
-    :param queries: list of queries
-    :param results_fileout: text file to save results to
-    :return: None
-    """
-    # load the index from the given filepath
-    # index is the custom 'Index' object as defined above
-    t0 = time.time()
-    index = indexing.load_index(index_filein)
-    print(f"Loading index took {round(time.time() - t0, 2)}s")
-
-    # resolve each individual query using the loaded index and save results to output file
-    with open(results_fileout, "w", encoding='utf-8') as f:
-        for q in queries:
-            if query_type.lower() == "boolean":
-                result = bool_helper(index, q.strip())
-                for doc in result:
-                    f.write(f"{doc}\n")
-                    # print(f"{query_num},{doc}")
-            elif query_type.lower() == "ranked":
-                result = ranked_query(index, q.strip(), expanded_query=expanded_query)
-                for doc, score in result:
-                    f.write(f"{doc},{round(score, 4)}\n")
-                    # print(f"{query_num},{doc},{round(score, 4)}")
-    return
-
-
-def resolve_query(query_type: str, index_filein: str, query: str, results_fileout: str, expanded_query: str=""):
-    """
-    Loads index and given query file, processes ranked queries and saves output to a given file location
+    :param index:
     :param expanded_query:
     :param query_type: either 'boolean' or 'ranked'
-    :param index_filein: text file to load index from
     :param query: list of queries
     :param results_fileout: text file to save results to
     :return: None
     """
-    # load the index from the given filepath
-    # index is the custom 'Index' object as defined above
-    t0 = time.time()
-    index = indexing.load_index(index_filein)
-    print(f"Loading index took {round(time.time() - t0, 2)}s")
-
     # resolve each individual query using the loaded index and save results to output file
     with open(results_fileout, "w", encoding='utf-8') as f:
         if query_type.lower() == "boolean":
@@ -100,14 +63,23 @@ def ranked_query(index: Index, query: str, expanded_query=""):
 
     # get the set of all documents to calculate score for
     docs_union = set()
+    terms_in_index = []
     for term in terms:
         docs = index.getTermDocAppearances(term)
-        docs_union = docs_union.union(docs)
+        if len(docs) != 0:
+            terms_in_index.append(term)
+            docs_union = docs_union.union(docs)
 
+    expanded_terms_in_index = []
+    for term in expanded_terms:
+        docs = index.getTermDocAppearances(term)
+        if len(docs) != 0:
+            expanded_terms_in_index.append(term)
+            docs_union = docs_union.union(docs)
     # calculate the score for each document
     scores = {}
     for doc in docs_union:
-        scores[doc] = calculate_query_score(index, terms, doc, expanded_terms=expanded_terms)
+        scores[doc] = calculate_query_score(index, terms_in_index, doc, expanded_terms=expanded_terms_in_index)
 
     # sort results and keep only first 150 indices
     out = sorted(scores.items(), key=lambda x: x[1], reverse=True)
