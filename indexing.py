@@ -256,36 +256,11 @@ def saveContentIndexVbyte(fileout, term_doc_sv, lecture_total_slides):
 
 
 def load_index(filein):
-    term_freq = {}
-    term_doc_appearances = {}
-    term_positions = {}
     with open(filein, "r", encoding='utf-8') as f:
         num_docs = None
         if filein[-4:] == ".txt":
             num_docs = int(f.readline().split(" ")[1].strip())
         return Index(filein, num_docs=num_docs)
-    """
-        for line in f:
-            if line[0] != '\t':
-                terms = line.split(": ")
-                term_freq[terms[0]] = int(terms[1])
-                key = terms[0]
-                # print("-----------")
-                # print("header:", repr(terms[0]), repr(int(terms[1])))
-            # print(repr(line))
-            else:
-                terms = line.split(": ")
-                doc = int(terms[0])
-                if key in term_doc_appearances:
-                    term_doc_appearances[key].add(doc)
-                else:
-                    term_doc_appearances[key] = {doc}
-
-                positions = [int(s) for s in terms[1].split(',')]
-                term_positions[(key, doc)] = set(positions)
-                # print("footer:", repr(int(terms[0])), repr(positions))
-    return Index(filein, num_docs, term_freq, term_doc_appearances, term_positions)
-    """
 
 
 def loadContentIndex(filein, lecture_id):
