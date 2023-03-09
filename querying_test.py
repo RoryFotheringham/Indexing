@@ -31,10 +31,11 @@ index_filepath = "index/MIT.index.txt"
 def test_bool():
     data_filepath = "data/MIT/"
     clean_data_filepath = "clean/MIT/"
-    index_filepath = "index/MIT.index.txt"
+    index_filepath = "index/MIT.index.bin"
 
     t0 = time.time()
-    resolve_queries("boolean", index_filepath, ['engineering OR "machine learning" OR math AND NOT "bayesian statistical mining"'], "temp_bool_results2.txt")
+    resolve_queries("boolean", index_filepath, ['engineering love OR "machine learning" OR math AND NOT "bayesian statistical mining"'], "temp_bool_results2.txt")
+
     print(f"Total runtime: {round(time.time() - t0, 2)}s")
     exit()
 

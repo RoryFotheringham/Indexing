@@ -163,6 +163,9 @@ def preprocess_boolean_query(index, raw_query):
     curr_phrase = ''
     curr_query = ''
     total = []
+    
+    
+    
     for char in raw_query:
 
         if char == '"' and not open:
@@ -339,9 +342,13 @@ def phrase_search_recur(index: Index, tup, rest_of_phrase: [str]):
 
 def and_wrap(index: Index, term_1, term_2):
     if isinstance(term_1, str):
+        if term_1 in ['AND', 'OR', 'NOT']:
+            return set([-1])
         term_1 = resolve_term(index, term_1)
 
     if isinstance(term_2, str):
+        if term_2 in ['AND', 'OR', 'NOT']:
+            return set([-1])
         term_2 = resolve_term(index, term_2)
 
     return term_1.intersection(term_2)
@@ -349,9 +356,13 @@ def and_wrap(index: Index, term_1, term_2):
 
 def or_wrap(index: Index, term_1, term_2):
     if isinstance(term_1, str):
+        if term_1 in ['AND', 'OR', 'NOT']:
+            return set([-1])
         term_1 = resolve_term(index, term_1)
 
     if isinstance(term_2, str):
+        if term_2 in ['AND', 'OR', 'NOT']:
+            return set([-1])
         term_2 = resolve_term(index, term_2)
 
     return term_1.union(term_2)
@@ -359,6 +370,8 @@ def or_wrap(index: Index, term_1, term_2):
 
 def not_wrap(index: Index, term):
     if isinstance(term, str):
+        if term in ['AND', 'OR', 'NOT']:
+            return set([-1])
         term = resolve_term(index, term)
 
     return index.all_docs.difference(term)
@@ -372,6 +385,9 @@ def bool_helper(index: Index, query):
     :param query: untokenised raw string query
     :param index: Index
     '''
+
+    if query.count('"') % 2 != 0:
+        return set([-1])
 
     opp_dict = {1: ('NOT', not_wrap, 1),
                 2: ('AND', and_wrap, 2),
@@ -400,6 +416,8 @@ def bool_helper(index: Index, query):
         new_terms = []
         if arity == 1:
             application = function(index, terms[count + 1])
+            if application == set([-1]):
+                return [application]
             for i in range(len(terms)):
                 if i == count + 1:
                     continue
@@ -410,6 +428,8 @@ def bool_helper(index: Index, query):
 
         if arity == 2:
             application = function(index, terms[count - 1], terms[count + 1])
+            if application == set([-1]):
+                return [application]
             for i in range(len(terms)):
                 if i == count - 1 or i == count + 1:
                     continue
@@ -440,12 +460,16 @@ def bool_helper(index: Index, query):
                     try:
                         new_terms = make_new_terms(terms, count, opp_func, opp_arity)
                     except IndexError:
-                        print('badly formed boolean query query')
-                        return {}
+                        print('badly formed boolean query')
+                        return {-1}
                     return bool_search(new_terms, opp_index)
             opp_index += 1
 
-    return bool_search(terms, opp_index)
+    result = bool_search(terms, opp_index)
+    if not result:
+        return set([-1])
+    else:
+        return result 
 
 
 def boolean_query(index: Index, query: str):
