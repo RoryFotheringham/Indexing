@@ -113,6 +113,7 @@ class Index:
                     offset = aggregate
                     break
         if not found_term:
+            print(f"Didn't find {term}... ({round(time.time() - t0, 2)})")
             return False
 
         chunk_size = 1024
