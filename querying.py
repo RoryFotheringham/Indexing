@@ -110,7 +110,6 @@ def ranked_query(index: Index, query: str, expanded_query=""):
     expanded_terms_in_index = []
     for term in expanded_terms:
         docs = index.getTermDocAppearances(term)
-        print(docs)
         if len(docs) != 0:
             expanded_terms_in_index.append(term)
             docs_union = docs_union.union(docs)
