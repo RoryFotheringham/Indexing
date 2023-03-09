@@ -72,11 +72,13 @@ def resolve_query(query_type: str, index_filein: str, query: str, results_fileou
     return
 
 
-def resolveContentQuery(index_filein: str, query: str, lecture_id: int):
+def resolveContentQuery(index_filein: str, query: str, lecture_id: int, results_fileout: str = ""):
     index = indexing.loadContentIndex(index_filein, lecture_id)
     index.lecture_id = lecture_id
     result = ranked_query(index, query)
-    with open("yeet.txt", "w", encoding='utf-8') as f:
+    if results_fileout == "":
+        return result
+    with open(results_fileout, "w", encoding='utf-8') as f:
         for doc, score in result:
             f.write(f"{doc},{round(score, 4)}\n")
     return result
