@@ -6,9 +6,11 @@ from ContentIndex import ContentIndex
 from Index import Index
 
 
-def create_index(data_dir, fileout):
-    files = os.scandir(data_dir)
-
+def create_index(data_dirs, fileout):
+    files = []
+    for data_dir in data_dirs:
+        for file in sorted(os.scandir(data_dir), key=lambda e: e.name):
+            files.append(data_dir + file.name)
     # num of docs term appears in
     doc_freq = {}
     # docs that a term appears in
@@ -23,18 +25,17 @@ def create_index(data_dir, fileout):
     # term_doc_videos = {}
     doc_no = 1
     for f in files:
-        if "xml" not in f.name:
+        if "xml" not in f:
             continue
-        inp_dir = data_dir + f.name
-        print("===============================================")
-        print(inp_dir)
-        print(doc_no)
+        inp_dir = f
+        # print("===============================================")
+        # print(repr(inp_dir))
         doc_no = create_index_xml(inp_dir, doc_no, doc_freq, term_doc_appearances, term_positions, term_doc_sv, lecture_total_slides)
         # exit()
     doc_no += -1
     saveIndexText(fileout, doc_no, doc_freq, term_doc_appearances, term_positions)
     content_fileout = fileout.split(".", 1)[0] + "Content." + fileout.split(".", 1)[1]
-    print(fileout, content_fileout)
+    # print(fileout, content_fileout)
     saveContentIndexText(content_fileout, term_doc_sv, lecture_total_slides)
 
     saveIndexVbyte(f"{fileout[:-4]}.bin", doc_no, doc_freq, term_doc_appearances, term_positions)
@@ -51,6 +52,10 @@ def create_index_xml(filein, doc_no, doc_freq, term_doc_appearances, term_positi
         # print(elem.tag)
         if elem.tag == "source":
             source = elem.text
+            if source == "MIT":
+                offset = 1
+            elif source == "KHAN_ACADEMY":
+                offset = 0
             continue
         elif elem.tag == "date":
             date = elem.text
@@ -59,14 +64,14 @@ def create_index_xml(filein, doc_no, doc_freq, term_doc_appearances, term_positi
             continue
         elif elem.tag == "lectures":
             max_doc_no = indexLecturesElem(elem, doc_no, doc_freq, term_doc_appearances, term_positions,
-                                                  term_doc_sv, lecture_total_slides)
+                                                  term_doc_sv, lecture_total_slides, offset=offset)
         elif elem.tag == "videos":
             continue
 
     return max_doc_no + 1
 
 
-def indexLecturesElem(root, doc_no, doc_freq, term_doc_appearances, term_positions, term_doc_sv, lecture_total_slides):
+def indexLecturesElem(root, doc_no, doc_freq, term_doc_appearances, term_positions, term_doc_sv, lecture_total_slides, offset=1):
     lecture_no = doc_no - 1
     counter = 1
     for lecture_elem in root:
@@ -78,18 +83,19 @@ def indexLecturesElem(root, doc_no, doc_freq, term_doc_appearances, term_positio
             if elem.tag == "lecture_title":
                 lecture_title = elem.text
             elif elem.tag == "lectureno":
-                sv_no = 1
+                sv_no = offset
+                #sv_no = 1
                 lecture_no += 1
-                print(lecture_no, "-", lecture_title)
+                # print(lecture_no, "-", repr(lecture_title))
                 # lecture_no = int(elem.text)
             elif elem.tag == "slides":
 
                 for subelem in elem:
 
                     slide_no_str, slide_text = list(subelem)
-                    slide_no = int(slide_no_str.text) + 1
+                    slide_no = int(slide_no_str.text) + offset
                     sv_no = max(sv_no, slide_no)
-                    print(f'\t\tslide_video_number: {slide_no}/{sv_no}')
+                    # print(f'\t\tslide_video_number: {slide_no}/{sv_no}')
                     index_sv_text(slide_text, lecture_no, term_doc_sv, slide_no)
                     counter = indexText(slide_text, lecture_no, counter, doc_freq, term_doc_appearances,
                                         term_positions)
@@ -99,11 +105,11 @@ def indexLecturesElem(root, doc_no, doc_freq, term_doc_appearances, term_positio
 
                 for subelem in elem:
                     video_url, video_title, video_transcript = list(subelem)
-                    print(f'\t\tslide_video_number: {sv_no}')
+                    sv_no += 1
+                    # print(f'\t\tslide_video_number: {sv_no}')
                     # print(f"Video - {video_title.text}")
                     for video_slice in video_transcript:
                         time_slice, slice_text = list(video_slice)
-                        sv_no += 1
                         index_sv_text(slice_text, lecture_no, term_doc_sv, sv_no)
 
                         counter = indexText(slice_text, lecture_no, counter, doc_freq, term_doc_appearances,
@@ -111,7 +117,7 @@ def indexLecturesElem(root, doc_no, doc_freq, term_doc_appearances, term_positio
             else:
                 continue
         lecture_total_slides[lecture_no] = sv_no
-        print(f'\t\tnum_slides: {sv_no}')
+        # print(f'\t\tnum_slides: {sv_no}')
     return lecture_no
 
 
