@@ -35,10 +35,10 @@ def resolve_query(query_type: str, index: Index, query: str, results_fileout: st
     return
 
 
-def resolveContentQuery(index_filein: str, query: str, lecture_id: int, results_fileout: str = ""):
+def resolveContentQuery(index_filein: str, query: str, lecture_id: int, expanded_query: str="", results_fileout: str = ""):
     index = indexing.loadContentIndex(index_filein, lecture_id)
     index.lecture_id = lecture_id
-    result = ranked_query(index, query)
+    result = ranked_query(index, query, expanded_query=expanded_query)
     if results_fileout == "":
         return result
     with open(results_fileout, "w", encoding='utf-8') as f:
