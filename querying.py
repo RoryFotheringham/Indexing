@@ -369,9 +369,9 @@ def bool_helper(index: Index, query):
     terms = preprocess_boolean_query(index, query)
 
     if len(terms) == 1:
-        if isinstance(terms, str):
+        if isinstance(terms[0], str):
             return index.getTermDocAppearances(terms[0])
-        elif isinstance(terms, set):
+        elif isinstance(terms[0], set):
             return terms[0]
 
     def make_new_terms(terms, count, function, arity):
