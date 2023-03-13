@@ -370,7 +370,7 @@ def bool_helper(index: Index, query):
 
     if len(terms) == 1:
         if isinstance(terms[0], str):
-            return index.getTermDocAppearances(terms[0])
+            return resolve_term(terms[0])
         elif isinstance(terms[0], set):
             return terms[0]
 
