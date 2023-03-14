@@ -269,5 +269,5 @@ def load_index(filein):
         return Index(filein, num_docs=num_docs)
 
 
-def loadContentIndex(filein, lecture_id):
-    return ContentIndex(filein, lecture_id=lecture_id)
+def loadContentIndex(filein):
+    return ContentIndex(filein)
