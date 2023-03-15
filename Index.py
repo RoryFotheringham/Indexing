@@ -29,6 +29,9 @@ class Index:
             # save the total number of documents in index
             self.total_num_docs = num_docs
 
+    def fill_all_docs(self):
+        self.all_docs = set(range(1,self.total_num_docs+1))
+
     def getDocFreq(self, term: str):
         if term not in self.doc_freq:
             if len(self.LRU) >= self.LRU.maxlen:
