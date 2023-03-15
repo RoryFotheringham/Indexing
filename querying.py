@@ -428,10 +428,12 @@ def bool_helper(index: Index, query):
 
         while opp_index <= max(opp_dict.keys()):
             opp, opp_func, opp_arity = opp_dict.get(opp_index)
-            for count, term in enumerate(terms):
+            
+            rev_terms = reversed(terms)
+            for count, term in enumerate(rev_terms):
                 if term == opp:
                     try:
-                        new_terms = make_new_terms(terms, count, opp_func, opp_arity)
+                        new_terms = make_new_terms(terms, len(terms)-count-1, opp_func, opp_arity)
                     except IndexError:
                         print('badly formed boolean query')
                         return {-1}
