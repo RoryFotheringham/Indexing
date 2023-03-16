@@ -37,7 +37,8 @@ class Index:
             if len(self.LRU) >= self.LRU.maxlen:
                 self.removeFromCache(1)
             self.loadToCache(term)
-
+        elif term != self.LRU[-1]:
+            self.updateQueue(term)
         if term in self.doc_freq:
             return self.doc_freq[term]
         else:
@@ -48,7 +49,8 @@ class Index:
             if len(self.LRU) >= self.LRU.maxlen:
                 self.removeFromCache(1)
             self.loadToCache(term)
-
+        elif term != self.LRU[-1]:
+            self.updateQueue(term)
         if term in self.term_doc_appearances:
             return self.term_doc_appearances[term]
         else:
@@ -60,7 +62,8 @@ class Index:
             if len(self.LRU) >= self.LRU.maxlen:
                 self.removeFromCache(1)
             self.loadToCache(term)
-
+        elif term != self.LRU[-1]:
+            self.updateQueue(term)
         if term_doc_tuple in self.term_freq:
             return self.term_freq[term_doc_tuple]
         else:
@@ -73,11 +76,17 @@ class Index:
             if len(self.LRU) >= self.LRU.maxlen:
                 self.removeFromCache(1)
             self.loadToCache(term)
-
+        elif term != self.LRU[-1]:
+            self.updateQueue(term)
         if term_doc_tuple in self.term_positions:
             return self.term_positions[term_doc_tuple]
         else:
             return []
+
+    def updateQueue(self, term):
+        self.LRU.remove(term)
+        self.LRU.append(term)
+        return
 
     def loadToCache(self, term):
         found_term = self.loadTerm(term)

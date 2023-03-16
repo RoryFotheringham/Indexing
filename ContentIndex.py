@@ -21,7 +21,8 @@ class ContentIndex(Index):
             if len(self.LRU) >= self.LRU.maxlen:
                 self.removeFromCache(1)
             self.loadToCache(term)
-
+        elif term != self.LRU[-1]:
+            self.updateQueue(term)
         if term in self.term_doc_sv and self.lecture_id in self.term_doc_sv[term]:
             return len(set(self.term_doc_sv[term][self.lecture_id]))
         else:
@@ -32,7 +33,8 @@ class ContentIndex(Index):
             if len(self.LRU) >= self.LRU.maxlen:
                 self.removeFromCache(1)
             self.loadToCache(term)
-
+        elif term != self.LRU[-1]:
+            self.updateQueue(term)
         if term in self.term_doc_sv and self.lecture_id in self.term_doc_sv[term]:
             return set(self.term_doc_sv[term][self.lecture_id])
         else:
@@ -43,12 +45,18 @@ class ContentIndex(Index):
             if len(self.LRU) >= self.LRU.maxlen:
                 self.removeFromCache(1)
             self.loadToCache(term)
-
+        elif term != self.LRU[-1]:
+            self.updateQueue(term)
         if term in self.term_doc_sv and self.lecture_id in self.term_doc_sv[term]:
             slide_appearances = self.term_doc_sv[term][self.lecture_id]
             return slide_appearances.count(doc)
         else:
             return 0
+
+    def updateQueue(self, term):
+        self.LRU.remove(term)
+        self.LRU.append(term)
+        return
 
     def loadToCache(self, term):
         found_term = self.loadTerm(term)
