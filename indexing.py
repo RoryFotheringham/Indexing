@@ -90,7 +90,6 @@ def create_index_xml(filein, doc_no, doc_freq, term_doc_appearances, term_positi
 
 def indexLecturesElem(root, doc_no, doc_freq, term_doc_appearances, term_positions, term_doc_sv, lecture_total_slides, offset=1, s=-1):
     lecture_no = doc_no - 1
-    counter = 1
     for lecture_elem in root:
         if lecture_elem.tag != "lecture":
             continue
@@ -103,6 +102,7 @@ def indexLecturesElem(root, doc_no, doc_freq, term_doc_appearances, term_positio
                 sv_no = offset
                 #sv_no = 1
                 lecture_no += 1
+                counter = 1
                 if s != -1 and lecture_no > s:
                     return lecture_no-1
                 # print(lecture_no, "-", repr(lecture_title))
