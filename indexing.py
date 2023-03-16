@@ -1,4 +1,5 @@
 import os
+import time
 import xml.etree.ElementTree as ET
 
 import vbyte
@@ -6,7 +7,8 @@ from ContentIndex import ContentIndex
 from Index import Index
 
 
-def create_index(data_dirs, fileout):
+def create_index(data_dirs, fileout, s=-1):
+    t0 = time.time()
     files = []
     for data_dir in data_dirs:
         for file in sorted(os.scandir(data_dir), key=lambda e: e.name):
@@ -30,7 +32,22 @@ def create_index(data_dirs, fileout):
         inp_dir = f
         # print("===============================================")
         # print(repr(inp_dir))
-        doc_no = create_index_xml(inp_dir, doc_no, doc_freq, term_doc_appearances, term_positions, term_doc_sv, lecture_total_slides)
+        doc_no = create_index_xml(inp_dir, doc_no, doc_freq, term_doc_appearances, term_positions, term_doc_sv, lecture_total_slides, s=s)
+        if s != -1 and doc_no+1 > s:
+            break
+
+    while s != -1 and doc_no < s:
+        print(f"{round(time.time() - t0, 2)}s - {doc_no}/{s}")
+        for f in files:
+            if "xml" not in f:
+                continue
+            inp_dir = f
+            # print("===============================================")
+            # print(repr(inp_dir))
+            doc_no = create_index_xml(inp_dir, doc_no, doc_freq, term_doc_appearances, term_positions, term_doc_sv,
+                                      lecture_total_slides, s=s)
+            if doc_no + 1 > s:
+                break
         # exit()
     doc_no += -1
     saveIndexText(fileout, doc_no, doc_freq, term_doc_appearances, term_positions)
@@ -42,7 +59,7 @@ def create_index(data_dirs, fileout):
     saveContentIndexVbyte(content_fileout, term_doc_sv, lecture_total_slides)
 
 
-def create_index_xml(filein, doc_no, doc_freq, term_doc_appearances, term_positions, term_doc_sv, lecture_total_slides):
+def create_index_xml(filein, doc_no, doc_freq, term_doc_appearances, term_positions, term_doc_sv, lecture_total_slides, s=-1):
     tree = ET.parse(filein)
     root = tree.getroot()
     # print(root.tag)
@@ -64,14 +81,14 @@ def create_index_xml(filein, doc_no, doc_freq, term_doc_appearances, term_positi
             continue
         elif elem.tag == "lectures":
             max_doc_no = indexLecturesElem(elem, doc_no, doc_freq, term_doc_appearances, term_positions,
-                                                  term_doc_sv, lecture_total_slides, offset=offset)
+                                                  term_doc_sv, lecture_total_slides, offset=offset, s=s)
         elif elem.tag == "videos":
             continue
 
     return max_doc_no + 1
 
 
-def indexLecturesElem(root, doc_no, doc_freq, term_doc_appearances, term_positions, term_doc_sv, lecture_total_slides, offset=1):
+def indexLecturesElem(root, doc_no, doc_freq, term_doc_appearances, term_positions, term_doc_sv, lecture_total_slides, offset=1, s=-1):
     lecture_no = doc_no - 1
     counter = 1
     for lecture_elem in root:
@@ -86,6 +103,8 @@ def indexLecturesElem(root, doc_no, doc_freq, term_doc_appearances, term_positio
                 sv_no = offset
                 #sv_no = 1
                 lecture_no += 1
+                if s != -1 and lecture_no > s:
+                    return lecture_no-1
                 # print(lecture_no, "-", repr(lecture_title))
                 # lecture_no = int(elem.text)
             elif elem.tag == "slides":
@@ -225,20 +244,30 @@ def saveIndexVbyte(fileout, doc_no, doc_freq, term_doc_appearances, term_positio
     if fileout.rsplit(".", 1)[-1] != "bin":
         fileout = fileout.rsplit(".", 1)[0] + ".bin"
     index_squared = fileout.split(".", 1)[0] + ".indexSquared.txt"
-    with open(fileout, 'wb') as w, open(index_squared, 'w') as w_squared:
+    with open(fileout, 'wb') as w, open(index_squared, 'w') as w_squared, open(fileout.split(".", 1)[0] + ".rawindexSquared.txt", 'w') as raw_w_squared:
         w.write(vbyte.encode_vbyte([doc_no]))
         prev = 0
         for t in sorted(doc_freq):
             w_squared.write(f"{t}:{w.tell() - prev}\n")
             prev = w.tell()
+            raw_w_squared.write(f"{t}:{w.tell()}\n")
             #w_squared.write(f"{t}:{w.tell()}\n")
             w.write(vbyte.encode_vbyte([ord(x) for x in t]))
             #print(f"{t}:{w.tell()}")
             w.write(vbyte.encode_vbyte([doc_freq[t]]))
 
+            prev_doc = 0
             for doc in sorted(term_doc_appearances[t]):
-                w.write(vbyte.encode_vbyte([doc]))
-                w.write(vbyte.encode_vbyte(term_positions[(t, doc)]))
+                #w.write(vbyte.encode_vbyte([doc]))
+                w.write(vbyte.encode_vbyte([doc - prev_doc]))
+                tps = term_positions[(t, doc)]
+                pt = 0
+                delta = []
+                for i in range(len(tps)):
+                    delta.append(tps[i] - pt)
+                    pt = tps[i]
+                w.write(vbyte.encode_vbyte(delta))
+                prev_doc = doc
             w.write(bytes([0]))
 
 
@@ -248,16 +277,18 @@ def saveContentIndexVbyte(fileout, term_doc_sv, lecture_total_slides):
     if fileout.rsplit(".", 1)[-1] != "bin":
         fileout = fileout.rsplit(".", 1)[0] + ".bin"
     index_squared = fileout.split(".", 1)[0] + ".indexSquared.txt"
-    with open(f"{fileout}", 'wb') as w, open(index_squared, 'w') as w_squared:
+    with open(f"{fileout}", 'wb') as w, open(index_squared, 'w') as w_squared, open(fileout.split(".", 1)[0] + ".rawindexSquared.txt", 'w') as raw_w_squared:
         prev = 0
         for t in sorted(term_doc_sv):
             w_squared.write(f"{t}:{w.tell() - prev}\n")
             prev = w.tell()
-            #w_squared.write(f"{t}:{w.tell()}\n")
+            raw_w_squared.write(f"{t}:{w.tell()}\n")
             w.write(vbyte.encode_vbyte([ord(x) for x in t]))
+            prev_doc = 0
             for doc in sorted(term_doc_sv[t]):
-                w.write(vbyte.encode_vbyte([doc, lecture_total_slides[doc]]))
+                w.write(vbyte.encode_vbyte([doc - prev_doc, lecture_total_slides[doc]]))
                 w.write(vbyte.encode_vbyte(term_doc_sv[t][doc]))
+                prev_doc = doc
             w.write(bytes([0]))
 
 

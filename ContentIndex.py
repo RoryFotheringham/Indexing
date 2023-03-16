@@ -96,6 +96,7 @@ class ContentIndex(Index):
             stage = 0
             doc = -1
             doc_def = True
+            doc_aggregration = 0
             while True:
                 chunk = f.read(chunk_size)
                 if not chunk:
@@ -116,11 +117,17 @@ class ContentIndex(Index):
                             # thus parse it
                             if doc_def:
                                 doc_def = False
-                                doc = result[0]
+                                doc_aggregration += result[0]
+                                doc = doc_aggregration
                                 doc_num_slides = result[1]
                                 self.total_num_docs = doc_num_slides
                             else:
                                 doc_def = True
+                                #slide_aggregration = 0
+                                #slides = []
+                                #for slide in result:
+                                #    slide_aggregration += slide
+                                #    slides.append(slide_aggregration)
                                 self.term_doc_sv[term][doc] = result
                                 # print(f"{doc}: {result}")
                         result = []

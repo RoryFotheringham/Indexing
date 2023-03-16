@@ -126,6 +126,7 @@ class Index:
             stage = 0
             doc = -1
             doc_def = True
+            doc_aggregration = 0
             while True:
                 chunk = f.read(chunk_size)
                 if not chunk:
@@ -150,14 +151,20 @@ class Index:
                             # thus parse it
                             if doc_def:
                                 doc_def = False
-                                doc = result[0]
+                                doc_aggregration += result[0]
+                                doc = doc_aggregration
                             else:
                                 doc_def = True
                                 if term in self.term_doc_appearances:
                                     self.term_doc_appearances[term].add(doc)
                                 else:
                                     self.term_doc_appearances[term] = {doc}
-                                self.term_positions[(term, doc)] = result
+                                pos_aggregration = 0
+                                positions = []
+                                for pos in result:
+                                    pos_aggregration += pos
+                                    positions.append(pos_aggregration)
+                                self.term_positions[(term, doc)] = positions
                                 self.term_freq[(term, doc)] = len(result)
                                 # print(f"{doc}: {result}")
                         result = []
