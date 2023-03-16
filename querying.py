@@ -23,7 +23,9 @@ def resolve_query(query_type: str, index: Index, query: str, results_fileout: st
     # resolve each individual query using the loaded index and save results to output file
     with open(results_fileout, "w", encoding='utf-8') as f:
         if query_type.lower() == "boolean":
+            index.fill_all_docs()
             result = bool_helper(index, query.strip())
+            index.all_docs = set()
             for doc in result:
                 f.write(f"{doc}\n")
                 # print(f"{query_num},{doc}")
@@ -369,7 +371,7 @@ def bool_helper(index: Index, query):
 
     if len(terms) == 1:
         if isinstance(terms[0], str):
-            return resolve_term(terms[0])
+            return resolve_term(index, terms[0])
         elif isinstance(terms[0], set):
             return terms[0]
 
@@ -426,10 +428,12 @@ def bool_helper(index: Index, query):
 
         while opp_index <= max(opp_dict.keys()):
             opp, opp_func, opp_arity = opp_dict.get(opp_index)
-            for count, term in enumerate(terms):
+            
+            rev_terms = reversed(terms)
+            for count, term in enumerate(rev_terms):
                 if term == opp:
                     try:
-                        new_terms = make_new_terms(terms, count, opp_func, opp_arity)
+                        new_terms = make_new_terms(terms, len(terms)-count-1, opp_func, opp_arity)
                     except IndexError:
                         print('badly formed boolean query')
                         return {-1}

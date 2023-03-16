@@ -37,8 +37,10 @@ def test_bool():
 
     t0 = time.time()
     index = Index(index_filepath)
-    resolve_query("boolean", index, '"Obama"', "temp_bool_results2.txt")
+    
 
+    resolve_query("boolean", index, 'NOT Maths AND NOT NOT NOT "science and engineering" AND NOT number', "temp_bool_results2.txt")
+    resolve_query("boolean", index, 'NOT Maths AND NOT Obama AND NOT number', "temp_bool_results2.txt")
 
     print(f"Total runtime: {round(time.time() - t0, 2)}s")
     exit()
