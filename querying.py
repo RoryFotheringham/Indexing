@@ -25,7 +25,7 @@ def resolve_query(query_type: str, index: Index, query: str, results_fileout: st
         if query_type.lower() == "boolean":
             index.fill_all_docs()
             result = bool_helper(index, query.strip())
-            index.total_num_docs = set()
+            index.all_docs = set()
             for doc in result:
                 f.write(f"{doc}\n")
                 # print(f"{query_num},{doc}")
